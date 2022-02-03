@@ -8,13 +8,4 @@ public class BinaryTree {
     BinaryTree(){
         root = null;
     }
-
-    public void postOrderTraversal(Node n){
-        if (n == null){
-            return;
-        }
-        postOrderTraversal(n.left);
-        postOrderTraversal(n.right);
-        System.out.print(n.root + "-");
-    }
 }

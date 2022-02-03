@@ -1,9 +1,9 @@
 public class Node {
-    int root;
+    int nodeVal;
     Node left, right;
 
     public Node (int value){
-        root = value;
+        nodeVal = value;
         left = null;
         right = null;
     }
