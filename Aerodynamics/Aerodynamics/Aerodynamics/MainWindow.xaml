@@ -10,13 +10,13 @@
         <Viewport3D Name="scene">
             <Viewport3D.Camera>
                 <PerspectiveCamera x:Name="mainCam" Position="5 5 5" LookDirection="-5 -5 -5">
-                    
+
                 </PerspectiveCamera>
             </Viewport3D.Camera>
             <ModelVisual3D>
                 <ModelVisual3D.Content>
                     <DirectionalLight x:Name="light" Direction="-1 -1 -1">
-                        
+
                     </DirectionalLight>
                 </ModelVisual3D.Content>
             </ModelVisual3D>
