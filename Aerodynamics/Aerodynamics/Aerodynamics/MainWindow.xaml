@@ -55,5 +55,6 @@
                 </ModelVisual3D.Content>
             </ModelVisual3D>
         </Viewport3D>
+        <Button x:Name="Load_File" Content="Load File" Click="OpenFileExplorer" HorizontalAlignment="Left" Margin="361,341,0,0" VerticalAlignment="Top" Width="75"/>
     </Grid>
 </Window>

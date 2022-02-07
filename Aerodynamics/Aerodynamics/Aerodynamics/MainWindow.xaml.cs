@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.IO;
+using Microsoft.Win32;
 
 namespace Aerodynamics
 {
@@ -23,6 +25,16 @@ namespace Aerodynamics
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void OpenFileExplorer(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.ShowDialog();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                File file = openFileDialog.FileName
+            }
         }
     }
 }
