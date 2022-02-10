@@ -9,8 +9,11 @@ import time
 
 pygame.init()
 
+clock = pygame.time.Clock()
+
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 500
+FPS = 60
 
 COLUMN_WIDTH = SCREEN_WIDTH / 100  # Allows 100 rectangles / columns to be fit within the current screen size.
 
@@ -32,18 +35,23 @@ class Column:
 
 
     def update_column(self):
-        draw_rectangle(self.position, self.height, self.width)
+        draw_rectangle(self)
 
 
-def draw_rectangle(height, position):  # Pygame draws from the top left hand side of the screen, this is the engine's 'origin' in terms of coordinates.
-    pygame.draw.rect(SCREEN, WHITE, (position, SCREEN_HEIGHT - height, COLUMN_WIDTH, height))  # Due to this, everything needs to be offset downwards, as the shapes are drawn
+def draw_rectangle(column):  # Pygame draws from the top left hand side of the screen, this is the engine's 'origin' in terms of coordinates.
+    pygame.draw.rect(SCREEN, WHITE, (column.position, SCREEN_HEIGHT - column.height, COLUMN_WIDTH, column.height))  # Due to this, everything needs to be offset downwards, as the shapes are drawn
     # the top downwards, rather than what you would imagine, which is from the bottom to the top. This is the reason for the top right position being set to 'SCREEN_HEIGHT -height'.
     
 
 def random_columns():  # Test to generate a screen of randomly sized columns. Works well so far. Generates a new 'seed' of columns every second.    
+    columns = []
     for i in range(0, 800, 8):
         height = random.randint(0, 500)
-        draw_rectangle(height, i)
+        columns.append(Column(i, height))
+    
+    for column in columns:
+        column.update_column()
+    
     pygame.display.flip()
     time.sleep(1)
     SCREEN.fill(BLACK)
@@ -56,9 +64,10 @@ def main():
             if event.type == pygame.QUIT:
                 print("Program has finished running.")
                 run = False
-
         
         random_columns()
+        pygame.display.update()
+        clock.tick(FPS)
 
     pygame.quit()
 
