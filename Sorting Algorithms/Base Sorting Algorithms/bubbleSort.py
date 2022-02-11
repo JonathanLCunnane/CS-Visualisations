@@ -15,7 +15,7 @@ def bubble_sort(items):  # The bubble sort algorithm itself.
     for pass_length in range(len(items), 0, -1):  # Each time this loops, a "pass" is made, each time shorter than the one before.
         index = 0
         passes += 1
-        current_items = items.copy()
+        current_items = items.copy()  # Grabs a copy of the array before it is potentially edited. This is to ascertain whether a swap is made.
         while index < pass_length - 1:  
             if items[index] > items[index + 1]:
                 temp = items[index + 1]
