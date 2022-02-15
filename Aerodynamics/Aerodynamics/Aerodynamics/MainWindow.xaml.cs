@@ -23,13 +23,32 @@ namespace Aerodynamics
     /// </summary>
     public partial class MainWindow : Window
     {
-        string geometricVertices;
-        string faces;
-        string normals;
-        string textureVertices;
+        List<Point3D> geometricVertices;
+        List<Point3D> faces;
+        //string normals;
+        //string textureVertices;
+        Model3DGroup model3DGroup = new Model3DGroup();
+        MeshGeometry3D mesh = new MeshGeometry3D();
+        Viewport3D viewport;
+        GeometryModel3D model = new GeometryModel3D();
+        List<int> facePoints;
         public MainWindow()
         {
             InitializeComponent();
+            this.scene.KeyDown += Scene_KeyDown;
+        }
+
+        private void Scene_KeyDown(object sender, KeyEventArgs e)
+        {
+            Quaternion quaternion = new Quaternion();
+            Quaternion q =
+                e.Key == Key.Left ? new Quaternion(new Vector3D(0, 1, 0), -1) :
+                e.Key == Key.Right ? new Quaternion(new Vector3D(0, 1, 0), 1) :
+                e.Key == Key.Up ? new Quaternion(new Vector3D(1, 0, 0), -1) :
+                e.Key == Key.Down ? new Quaternion(new Vector3D(1, 0, 0), 1) :
+                Quaternion.Identity;
+            quaternion = q * quaternion;
+            model.Transform = new RotateTransform3D(new QuaternionRotation3D(quaternion));
         }
 
         private void OpenFileExplorer(object sender, RoutedEventArgs e)
@@ -38,10 +57,11 @@ namespace Aerodynamics
             openFileDialog.Filter = "Wavefront files (*.obj)|*.obj|All files (*.*)|*.*";
             if (openFileDialog.ShowDialog() == true)
             {
-                geometricVertices = "";
-                faces = "";
-                normals = "";
-                textureVertices = "";
+                geometricVertices = new List<Point3D>();
+                faces = new List<Point3D>();
+                facePoints = new List<int>();
+                //normals = "";
+                //textureVertices = "";
 
                 foreach(string line in File.ReadLines(openFileDialog.FileName))
                 {
@@ -49,22 +69,37 @@ namespace Aerodynamics
                     if (lineTag == "v ")
                     {
                         //"geometric vertices"
-                        geometricVertices += "  " + line.Remove(0, 2);
+                        
+                        string[] lineArray = line.Remove(0, 2).Split(' ');
+                        geometricVertices.Add(new Point3D(double.Parse(lineArray[0]), double.Parse(lineArray[1]), double.Parse(lineArray[2])));
+                        //geometricVertices += "  " + line.Remove(0, 2);
                     }
                     else if (lineTag == "f ")
                     {
                         //"faces"
-                        faces += "  " + line.Remove(0, 2).Replace('/',' ');
+                        Console.WriteLine(line);
+                        List<int> list = new List<int>();
+                        foreach(string s in line.Remove(0, 2).Split(' '))
+                        {
+                            list.Add(int.Parse(s.Split('/')[0]));
+                        }
+                        for (int i = 0; i <= list.Count - 3; i++)
+                        {
+                            facePoints.Add(list[0]);
+                            facePoints.Add(list[i + 1]);
+                            facePoints.Add(list[i + 2]);
+                        }
+                        
                     }
                     else if (lineTag == "vt")
                     {
                         //"texture vertices"
-                        textureVertices += "  " + line.Remove(0, 2);
+                        //textureVertices += "  " + line.Remove(0, 2);
                     }
                     else if (lineTag == "vn")
                     {
                         //"vertex normals"
-                        normals += "  " + line.Remove(0, 2);
+                        //normals += "  " + line.Remove(0, 2);
                     }
                     else if (lineTag == "vp")
                     {
@@ -72,11 +107,33 @@ namespace Aerodynamics
                     }
 
                 }
-                Console.WriteLine(faces);
-                this.investigationObject.Positions = Point3DCollection.Parse(geometricVertices);
-                this.investigationObject.TriangleIndices = Int32Collection.Parse(faces);
-                this.investigationObject.Normals = Vector3DCollection.Parse(normals);
-                this.investigationObject.TextureCoordinates = PointCollection.Parse(textureVertices);
+                //Console.WriteLine(normals);
+                //mesh.Positions = Point3DCollection.Parse(geometricVertices);
+                //mesh.TriangleIndices = Int32Collection.Parse(faces);
+                //this.investigationObject.Normals = Vector3DCollection.Parse(normals);
+                //mesh.TextureCoordinates = PointCollection.Parse(textureVertices);
+                //this.investigationObject = mesh;
+                
+                //for(int i = 0; i < facePoints.Count/3; i++)
+                //{
+                //    faces.Add(new Point3D( facePoints[i * 3], facePoints[i * 3 + 1], facePoints[i * 3 + 2]));
+                //}
+                Console.WriteLine(facePoints.Count);
+                foreach(int x in facePoints)
+                {
+                    
+                    faces.Add(geometricVertices[x-1]);
+                }
+                model = new GeometryModel3D()
+                {
+                    Geometry = new MeshGeometry3D() {Positions = new Point3DCollection(faces)},
+                    Material = new DiffuseMaterial(Brushes.Red),
+                };
+
+                //DirectionalLight directLight = new DirectionalLight(Colors.White, new Vector3D(-1, -1, -1));
+                //PerspectiveCamera cam = new PerspectiveCamera(new Point3D(5, 5, 5), new Vector3D(-1, -1, -1), new Vector3D(1, 1, 1), 60);
+                viewport = this.scene;
+                viewport.Children.Add(new ModelVisual3D() { Content = model });                
             }
         }
     }
