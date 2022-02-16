@@ -35,20 +35,39 @@ namespace Aerodynamics
         public MainWindow()
         {
             InitializeComponent();
-            this.scene.KeyDown += Scene_KeyDown;
+            this.KeyDown += new KeyEventHandler(MainWindow_KeyDown);
+            this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
         }
 
-        private void Scene_KeyDown(object sender, KeyEventArgs e)
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            Quaternion quaternion = new Quaternion();
-            Quaternion q =
-                e.Key == Key.Left ? new Quaternion(new Vector3D(0, 1, 0), -1) :
-                e.Key == Key.Right ? new Quaternion(new Vector3D(0, 1, 0), 1) :
-                e.Key == Key.Up ? new Quaternion(new Vector3D(1, 0, 0), -1) :
-                e.Key == Key.Down ? new Quaternion(new Vector3D(1, 0, 0), 1) :
-                Quaternion.Identity;
-            quaternion = q * quaternion;
-            model.Transform = new RotateTransform3D(new QuaternionRotation3D(quaternion));
+            if(e.Key == Key.Right)
+            {
+                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), -10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
+                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+            }
+            else if(e.Key == Key.Left)
+            {
+                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
+                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+            }
+            else if(e.Key == Key.Up)
+            {
+                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 1), -10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
+                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+            }
+            else if(e.Key == Key.Down)
+            {
+                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 1), 10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
+                mainCam.UpDirection = mainCam.UpDirection
+                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+                
+            }
+        }
+
+        private void MainWindow_KeyUp(object sender, KeyEventArgs e)
+        {
+
         }
 
         private void OpenFileExplorer(object sender, RoutedEventArgs e)
@@ -72,12 +91,10 @@ namespace Aerodynamics
                         
                         string[] lineArray = line.Remove(0, 2).Split(' ');
                         geometricVertices.Add(new Point3D(double.Parse(lineArray[0]), double.Parse(lineArray[1]), double.Parse(lineArray[2])));
-                        //geometricVertices += "  " + line.Remove(0, 2);
                     }
                     else if (lineTag == "f ")
                     {
                         //"faces"
-                        Console.WriteLine(line);
                         List<int> list = new List<int>();
                         foreach(string s in line.Remove(0, 2).Split(' '))
                         {
@@ -107,21 +124,8 @@ namespace Aerodynamics
                     }
 
                 }
-                //Console.WriteLine(normals);
-                //mesh.Positions = Point3DCollection.Parse(geometricVertices);
-                //mesh.TriangleIndices = Int32Collection.Parse(faces);
-                //this.investigationObject.Normals = Vector3DCollection.Parse(normals);
-                //mesh.TextureCoordinates = PointCollection.Parse(textureVertices);
-                //this.investigationObject = mesh;
-                
-                //for(int i = 0; i < facePoints.Count/3; i++)
-                //{
-                //    faces.Add(new Point3D( facePoints[i * 3], facePoints[i * 3 + 1], facePoints[i * 3 + 2]));
-                //}
-                Console.WriteLine(facePoints.Count);
                 foreach(int x in facePoints)
                 {
-                    
                     faces.Add(geometricVertices[x-1]);
                 }
                 model = new GeometryModel3D()
