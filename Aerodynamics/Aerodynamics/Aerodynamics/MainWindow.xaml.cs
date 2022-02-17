@@ -27,11 +27,12 @@ namespace Aerodynamics
         List<Point3D> faces;
         //string normals;
         //string textureVertices;
-        Model3DGroup model3DGroup = new Model3DGroup();
-        MeshGeometry3D mesh = new MeshGeometry3D();
+        //Model3DGroup model3DGroup = new Model3DGroup();
+        //MeshGeometry3D mesh = new MeshGeometry3D();
         Viewport3D viewport;
         GeometryModel3D model = new GeometryModel3D();
         List<int> facePoints;
+        ModelVisual3D mv3d = new ModelVisual3D();
         public MainWindow()
         {
             InitializeComponent();
@@ -43,25 +44,19 @@ namespace Aerodynamics
         {
             if(e.Key == Key.Right)
             {
-                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), -10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
-                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+                RotateCam(mainCam, mainCam.UpDirection, -1, new Point3D(0, 0, 0));
             }
             else if(e.Key == Key.Left)
             {
-                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
-                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+                RotateCam(mainCam, mainCam.UpDirection, 1, new Point3D(0, 0, 0));
             }
             else if(e.Key == Key.Up)
             {
-                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 1), -10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
-                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), -1, new Point3D(0, 0, 0));
             }
             else if(e.Key == Key.Down)
             {
-                mainCam.Position = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 1), 10), new Point3D(0, 0, 0)).Transform(mainCam.Position);
-                mainCam.UpDirection = mainCam.UpDirection
-                mainCam.LookDirection = new Vector3D(-mainCam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
-                
+                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), 1, new Point3D(0, 0, 0));
             }
         }
 
@@ -81,8 +76,10 @@ namespace Aerodynamics
                 facePoints = new List<int>();
                 //normals = "";
                 //textureVertices = "";
+                viewport = this.scene;
+                viewport.Children.Remove(mv3d);
 
-                foreach(string line in File.ReadLines(openFileDialog.FileName))
+                foreach (string line in File.ReadLines(openFileDialog.FileName))
                 {
                     string lineTag = line.Substring(0, 2);
                     if (lineTag == "v ")
@@ -136,9 +133,18 @@ namespace Aerodynamics
 
                 //DirectionalLight directLight = new DirectionalLight(Colors.White, new Vector3D(-1, -1, -1));
                 //PerspectiveCamera cam = new PerspectiveCamera(new Point3D(5, 5, 5), new Vector3D(-1, -1, -1), new Vector3D(1, 1, 1), 60);
-                viewport = this.scene;
-                viewport.Children.Add(new ModelVisual3D() { Content = model });                
+                mv3d = new ModelVisual3D() { Content = model };
+                viewport.Children.Add(mv3d);                
             }
+        }
+
+        void RotateCam(PerspectiveCamera cam, Vector3D axis, float degrees, Point3D rotateAround)
+        {
+            RotateTransform3D rot = new RotateTransform3D(new AxisAngleRotation3D(axis, degrees), rotateAround);
+            cam.Position = rot.Transform(cam.Position);
+            Point3D p = rot.Transform(new Point3D(cam.UpDirection.X, cam.UpDirection.Y, cam.UpDirection.Z));
+            cam.UpDirection = new Vector3D(p.X, p.Y, p.Z);
+            cam.LookDirection = new Vector3D(-cam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
         }
     }
 }

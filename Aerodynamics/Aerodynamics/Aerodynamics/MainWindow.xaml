@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Aerodynamics"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="630" Width="1120">
     <Grid>
         <Viewport3D Name="scene" >
             <Viewport3D.Camera>
-                <PerspectiveCamera x:Name="mainCam" Position="5 5 5" LookDirection="-5 -5 -5">
+                <PerspectiveCamera x:Name="mainCam" Position="10,0,0" LookDirection="-1 0 0">
 
                 </PerspectiveCamera>
             </Viewport3D.Camera>
@@ -57,6 +57,12 @@
                 </ModelVisual3D.Content>
             </ModelVisual3D>-->
         </Viewport3D>
-        <Button x:Name="Load_File" Content="Load File" Click="OpenFileExplorer" HorizontalAlignment="Left" Margin="361,341,0,0" VerticalAlignment="Top" Width="75"/>
+        <ToolBarTray Margin="0,0,0,0" Background="LemonChiffon" Height="27" VerticalAlignment="Top">
+            <ToolBar Band="1" BandIndex="1" Height="27">
+                <Button x:Name="Load_File" Click="OpenFileExplorer" MinWidth="22" MinHeight="22">
+                    <Image Source="/Icons/OpenFolder/OpenFolder_16x.png" />
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
     </Grid>
 </Window>
