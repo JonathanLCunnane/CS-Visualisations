@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Aerodynamics"
         mc:Ignorable="d"
         Title="MainWindow" Height="630" Width="1120">
-    <Grid>
+    <Grid Background="#383e42">
         <Viewport3D Name="scene" >
             <Viewport3D.Camera>
                 <PerspectiveCamera x:Name="mainCam" Position="10,0,0" LookDirection="-1 0 0">
@@ -57,10 +57,16 @@
                 </ModelVisual3D.Content>
             </ModelVisual3D>-->
         </Viewport3D>
-        <ToolBarTray Margin="0,0,0,0" Background="LemonChiffon" Height="27" VerticalAlignment="Top">
-            <ToolBar Band="1" BandIndex="1" Height="27">
+        <ToolBarTray Margin="0,0,0,0" Background="Transparent" Height="27" VerticalAlignment="Top">
+            <ToolBar Band="1" BandIndex="1" Background="#888e92" Height="27">
                 <Button x:Name="Load_File" Click="OpenFileExplorer" MinWidth="22" MinHeight="22">
                     <Image Source="/Icons/OpenFolder/OpenFolder_16x.png" />
+                </Button>
+                <Separator>
+                    
+                </Separator>
+                <Button x:Name="Reset_Viewpoint" Click="ResetViewpoint" MinWidth="22" MinHeight="22">
+                    <Image Source="/Icons/CubeDimension/CubeDimension_16x.png" />
                 </Button>
             </ToolBar>
         </ToolBarTray>

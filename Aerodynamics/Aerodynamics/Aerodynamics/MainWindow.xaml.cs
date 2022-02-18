@@ -33,36 +33,115 @@ namespace Aerodynamics
         GeometryModel3D model = new GeometryModel3D();
         List<int> facePoints;
         ModelVisual3D mv3d = new ModelVisual3D();
+        int maxRotationSpeed = 4;
+        float distanceToCentre = 10;
+        Point3D centre = new Point3D(0, 0, 0);
+        Point previousMousePoint;
         public MainWindow()
         {
             InitializeComponent();
             this.KeyDown += new KeyEventHandler(MainWindow_KeyDown);
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
+            this.MouseWheel += new MouseWheelEventHandler(MainWindow_MouseWheel);
+            this.MouseMove += new MouseEventHandler(MainWindow_MouseMove);
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Right)
+            if(e.Key == Key.Right || e.Key == Key.NumPad6)
             {
-                RotateCam(mainCam, mainCam.UpDirection, -1, new Point3D(0, 0, 0));
+                RotateCam(mainCam, mainCam.UpDirection, -1, centre);
             }
-            else if(e.Key == Key.Left)
+            else if(e.Key == Key.Left || e.Key == Key.NumPad4)
             {
-                RotateCam(mainCam, mainCam.UpDirection, 1, new Point3D(0, 0, 0));
+                RotateCam(mainCam, mainCam.UpDirection, 1, centre);
             }
-            else if(e.Key == Key.Up)
+            else if(e.Key == Key.Up || e.Key == Key.NumPad8)
             {
-                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), -1, new Point3D(0, 0, 0));
+                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), -1, centre);
             }
-            else if(e.Key == Key.Down)
+            else if(e.Key == Key.Down || e.Key == Key.NumPad2)
             {
-                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), 1, new Point3D(0, 0, 0));
+                RotateCam(mainCam, Vector3D.CrossProduct(mainCam.UpDirection, mainCam.LookDirection), 1, centre);
             }
+            else if (e.Key == Key.NumPad9)
+            {
+                RotateCam(mainCam, mainCam.LookDirection, -1, centre);
+            }
+            else if (e.Key == Key.NumPad7)
+            {
+                RotateCam(mainCam, mainCam.LookDirection, 1, centre);
+            }
+
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
 
+        }
+
+        private void MainWindow_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            distanceToCentre += -e.Delta * 0.01f;
+            if (distanceToCentre < 2)
+            {
+                distanceToCentre = 2;
+            }
+            else if(distanceToCentre > 30)
+            {
+                distanceToCentre = 30;
+            }
+            CameraPositionScroll(distanceToCentre, centre, mainCam);
+            
+        }
+        private void MainWindow_MouseMove(object sender, MouseEventArgs e)
+        {
+            if(e.RightButton == MouseButtonState.Pressed)
+            {
+                if(previousMousePoint != new Point())
+                {
+                    Vector delta = e.GetPosition(this) - previousMousePoint;
+                    if (delta.Y > maxRotationSpeed)
+                    {
+                        delta.Y = maxRotationSpeed;
+                    }
+                    else if (delta.Y < -maxRotationSpeed)
+                    {
+                        delta.Y = -maxRotationSpeed;
+                    }
+                    if (delta.X > maxRotationSpeed)
+                    {
+                        delta.X = maxRotationSpeed;
+                    }
+                    else if (delta.X < -maxRotationSpeed)
+                    {
+                        delta.X = -maxRotationSpeed;
+                    }
+                    Vector3D vu = mainCam.UpDirection;
+                    Vector3D vf = mainCam.LookDirection;
+                    if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+                    {
+                        double speed = 0.05;
+                        vu.Normalize();
+                        vf.Normalize();
+                        TranslateTransform3D tt3d = new TranslateTransform3D(Vector3D.Multiply(vu, delta.Y * speed) + Vector3D.Multiply(Vector3D.CrossProduct(vu, vf), delta.X * speed));
+                        centre = tt3d.Transform(centre);
+                        mainCam.Position = tt3d.Transform(mainCam.Position);
+                    }
+                    else
+                    {
+                        RotateCam(mainCam, new Vector3D(0,1,0), -delta.X, centre);
+                        RotateCam(mainCam, Vector3D.CrossProduct(vf,vu), -delta.Y, centre);
+                        VerticalRotationLimiter(mainCam, 80);
+                    }
+                }
+                previousMousePoint = e.GetPosition(this);
+                
+            }
+            else if (previousMousePoint != new Point())
+            {
+                previousMousePoint = new Point();
+            }
         }
 
         private void OpenFileExplorer(object sender, RoutedEventArgs e)
@@ -128,7 +207,7 @@ namespace Aerodynamics
                 model = new GeometryModel3D()
                 {
                     Geometry = new MeshGeometry3D() {Positions = new Point3DCollection(faces)},
-                    Material = new DiffuseMaterial(Brushes.Red),
+                    Material = new DiffuseMaterial(Brushes.LightGray),
                 };
 
                 //DirectionalLight directLight = new DirectionalLight(Colors.White, new Vector3D(-1, -1, -1));
@@ -138,13 +217,37 @@ namespace Aerodynamics
             }
         }
 
-        void RotateCam(PerspectiveCamera cam, Vector3D axis, float degrees, Point3D rotateAround)
+        void ResetViewpoint(object sender, RoutedEventArgs e)
+        {
+
+        }
+        void RotateCam(PerspectiveCamera cam, Vector3D axis, double degrees, Point3D rotateAround)
         {
             RotateTransform3D rot = new RotateTransform3D(new AxisAngleRotation3D(axis, degrees), rotateAround);
             cam.Position = rot.Transform(cam.Position);
             Point3D p = rot.Transform(new Point3D(cam.UpDirection.X, cam.UpDirection.Y, cam.UpDirection.Z));
             cam.UpDirection = new Vector3D(p.X, p.Y, p.Z);
-            cam.LookDirection = new Vector3D(-cam.Position.X, -mainCam.Position.Y, -mainCam.Position.Z);
+            cam.LookDirection = new Vector3D(centre.X-cam.Position.X, centre.Y-mainCam.Position.Y, centre.Z-mainCam.Position.Z);
+        }
+    
+    void CameraPositionScroll(float distToCentre, Point3D centrePos, PerspectiveCamera cam)
+        {
+            Vector3D l = -cam.LookDirection;
+            l.Normalize();
+            cam.Position = new TranslateTransform3D(Vector3D.Multiply(l, distToCentre)).Transform(centrePos);
+        }
+
+        void VerticalRotationLimiter(PerspectiveCamera c, float limitingValue)
+        {
+            double degrees = 180 / Math.PI * Math.Atan( c.LookDirection.Y / Math.Pow(Math.Pow(c.LookDirection.X, 2) + Math.Pow(c.LookDirection.Z, 2), 0.5));
+            if ( degrees < -limitingValue)
+            {
+                RotateCam(c, Vector3D.CrossProduct(c.LookDirection, c.UpDirection), -(degrees + limitingValue), centre);
+            }
+            else if (degrees > limitingValue)
+            {
+                RotateCam(c, Vector3D.CrossProduct(c.LookDirection, c.UpDirection), -(degrees - limitingValue), centre);
+            }
         }
     }
 }
