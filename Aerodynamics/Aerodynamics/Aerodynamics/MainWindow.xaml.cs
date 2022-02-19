@@ -46,8 +46,10 @@ namespace Aerodynamics
             this.MouseMove += new MouseEventHandler(MainWindow_MouseMove);
         }
 
+
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
+            //Key camera controls.
             if(e.Key == Key.Right || e.Key == Key.NumPad6)
             {
                 RotateCam(mainCam, mainCam.UpDirection, -1, centre);
@@ -82,6 +84,7 @@ namespace Aerodynamics
 
         private void MainWindow_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            //Mouse wheel camera controls.
             distanceToCentre += -e.Delta * 0.01f;
             if (distanceToCentre < 2)
             {
@@ -96,6 +99,7 @@ namespace Aerodynamics
         }
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
+            //Mouse button and movement camera controls.
             if(e.RightButton == MouseButtonState.Pressed)
             {
                 if(previousMousePoint != new Point())
@@ -121,6 +125,7 @@ namespace Aerodynamics
                     Vector3D vf = mainCam.LookDirection;
                     if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
                     {
+                        //Panning
                         double speed = 0.05;
                         vu.Normalize();
                         vf.Normalize();
@@ -130,8 +135,9 @@ namespace Aerodynamics
                     }
                     else
                     {
-                        RotateCam(mainCam, new Vector3D(0,1,0), -delta.X, centre);
+                        //Rotation
                         RotateCam(mainCam, Vector3D.CrossProduct(vf,vu), -delta.Y, centre);
+                        RotateCam(mainCam, new Vector3D(0,1,0), -delta.X, centre);
                         VerticalRotationLimiter(mainCam, 80);
                     }
                 }
@@ -146,6 +152,7 @@ namespace Aerodynamics
 
         private void OpenFileExplorer(object sender, RoutedEventArgs e)
         {
+            //File opening
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Wavefront files (*.obj)|*.obj|All files (*.*)|*.*";
             if (openFileDialog.ShowDialog() == true)
@@ -158,13 +165,14 @@ namespace Aerodynamics
                 viewport = this.scene;
                 viewport.Children.Remove(mv3d);
 
+                //Opening .obj file format
                 foreach (string line in File.ReadLines(openFileDialog.FileName))
                 {
                     string lineTag = line.Substring(0, 2);
                     if (lineTag == "v ")
                     {
                         //"geometric vertices"
-                        
+
                         string[] lineArray = line.Remove(0, 2).Split(' ');
                         geometricVertices.Add(new Point3D(double.Parse(lineArray[0]), double.Parse(lineArray[1]), double.Parse(lineArray[2])));
                     }
@@ -172,7 +180,7 @@ namespace Aerodynamics
                     {
                         //"faces"
                         List<int> list = new List<int>();
-                        foreach(string s in line.Remove(0, 2).Split(' '))
+                        foreach (string s in line.Remove(0, 2).Split(' '))
                         {
                             list.Add(int.Parse(s.Split('/')[0]));
                         }
@@ -182,7 +190,7 @@ namespace Aerodynamics
                             facePoints.Add(list[i + 1]);
                             facePoints.Add(list[i + 2]);
                         }
-                        
+
                     }
                     else if (lineTag == "vt")
                     {
@@ -200,37 +208,44 @@ namespace Aerodynamics
                     }
 
                 }
-                foreach(int x in facePoints)
+                foreach (int x in facePoints)
                 {
-                    faces.Add(geometricVertices[x-1]);
+                    faces.Add(geometricVertices[x - 1]);
                 }
                 model = new GeometryModel3D()
                 {
-                    Geometry = new MeshGeometry3D() {Positions = new Point3DCollection(faces)},
+                    Geometry = new MeshGeometry3D() { Positions = new Point3DCollection(faces) },
                     Material = new DiffuseMaterial(Brushes.LightGray),
                 };
 
                 //DirectionalLight directLight = new DirectionalLight(Colors.White, new Vector3D(-1, -1, -1));
                 //PerspectiveCamera cam = new PerspectiveCamera(new Point3D(5, 5, 5), new Vector3D(-1, -1, -1), new Vector3D(1, 1, 1), 60);
                 mv3d = new ModelVisual3D() { Content = model };
-                viewport.Children.Add(mv3d);                
+                viewport.Children.Add(mv3d);
             }
         }
 
         void ResetViewpoint(object sender, RoutedEventArgs e)
         {
-
+            mainCam.Position = new Point3D(10, 0, 0);
+            mainCam.LookDirection = new Vector3D(-1, 0, 0);
+            mainCam.UpDirection = new Vector3D(0, 1, 0);
+            centre = new Point3D(0, 0, 0);
+            distanceToCentre = 10;
         }
         void RotateCam(PerspectiveCamera cam, Vector3D axis, double degrees, Point3D rotateAround)
         {
             RotateTransform3D rot = new RotateTransform3D(new AxisAngleRotation3D(axis, degrees), rotateAround);
             cam.Position = rot.Transform(cam.Position);
+            rot.CenterX = 0;
+            rot.CenterY = 0;
+            rot.CenterZ = 0;
             Point3D p = rot.Transform(new Point3D(cam.UpDirection.X, cam.UpDirection.Y, cam.UpDirection.Z));
             cam.UpDirection = new Vector3D(p.X, p.Y, p.Z);
             cam.LookDirection = new Vector3D(centre.X-cam.Position.X, centre.Y-mainCam.Position.Y, centre.Z-mainCam.Position.Z);
         }
     
-    void CameraPositionScroll(float distToCentre, Point3D centrePos, PerspectiveCamera cam)
+        void CameraPositionScroll(float distToCentre, Point3D centrePos, PerspectiveCamera cam)
         {
             Vector3D l = -cam.LookDirection;
             l.Normalize();
