@@ -222,6 +222,37 @@ namespace Aerodynamics
                 //PerspectiveCamera cam = new PerspectiveCamera(new Point3D(5, 5, 5), new Vector3D(-1, -1, -1), new Vector3D(1, 1, 1), 60);
                 mv3d = new ModelVisual3D() { Content = model };
                 viewport.Children.Add(mv3d);
+
+                Vector3D maxBound = new Vector3D(0, 0, 0);
+                Vector3D minBound = new Vector3D(0, 0, 0);
+                foreach(Point3D point in geometricVertices)
+                {
+                    if(point.X > maxBound.X)
+                    {
+                        maxBound.X = point.X;
+                    }
+                    if(point.Y > maxBound.Y)
+                    {
+                        maxBound.Y = point.Y;
+                    }
+                    if(point.Z > maxBound.Z)
+                    {
+                        maxBound.Z = point.Z;
+                    }
+                    if(point.X < minBound.X)
+                    {
+                        minBound.X = point.X;
+                    }
+                    if(point.Y < minBound.Y)
+                    {
+                        minBound.Y = point.Y;
+                    }
+                    if(point.Z < minBound.Z)
+                    {
+                        minBound.Z = point.Z;
+                    }
+                }
+                viewport.Children[viewport.Children.IndexOf(mv3d)].Transform = new TranslateTransform3D(Vector3D.Multiply(maxBound+minBound, -0.5));
             }
         }
 
