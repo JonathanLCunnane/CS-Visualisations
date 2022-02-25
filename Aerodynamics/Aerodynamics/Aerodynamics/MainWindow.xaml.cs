@@ -37,6 +37,10 @@ namespace Aerodynamics
         float distanceToCentre = 10;
         Point3D centre = new Point3D(0, 0, 0);
         Point previousMousePoint;
+
+        List<List<List<Vector3D>>> cellVelocity = new List<List<List<Vector3D>>>();
+        List<List<List<double>>> cellDensity = new List<List<List<double>>>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -44,6 +48,7 @@ namespace Aerodynamics
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
             this.MouseWheel += new MouseWheelEventHandler(MainWindow_MouseWheel);
             this.MouseMove += new MouseEventHandler(MainWindow_MouseMove);
+            this.MouseDown += new MouseButtonEventHandler(MainWindow_MouseDown);
         }
 
 
@@ -147,6 +152,14 @@ namespace Aerodynamics
             else if (previousMousePoint != new Point())
             {
                 previousMousePoint = new Point();
+            }
+        }
+
+        private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if(Math.Abs(Mouse.GetPosition(this.ParamListBox).X - 50) > 50 || Math.Abs(Mouse.GetPosition(this.ParamListBox).Y - 50) > 50)
+            {
+                this.ParamListBox.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -264,6 +277,18 @@ namespace Aerodynamics
             centre = new Point3D(0, 0, 0);
             distanceToCentre = 10;
         }
+
+        void ParamBox(object sender, RoutedEventArgs e)
+        {
+            if(this.ParamListBox.Visibility == Visibility.Collapsed)
+            {
+                this.ParamListBox.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.ParamListBox.Visibility = Visibility.Collapsed;
+            }
+        }
         void RotateCam(PerspectiveCamera cam, Vector3D axis, double degrees, Point3D rotateAround)
         {
             RotateTransform3D rot = new RotateTransform3D(new AxisAngleRotation3D(axis, degrees), rotateAround);
@@ -297,3 +322,4 @@ namespace Aerodynamics
         }
     }
 }
+
