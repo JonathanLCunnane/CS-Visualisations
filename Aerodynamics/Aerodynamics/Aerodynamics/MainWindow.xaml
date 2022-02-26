@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:Microsoft.Toolkit.Uwp.UI"
         xmlns:local="clr-namespace:Aerodynamics"
         mc:Ignorable="d"
         Title="MainWindow" Height="630" Width="1120">
@@ -20,42 +21,6 @@
                     </DirectionalLight>
                 </ModelVisual3D.Content>
             </ModelVisual3D>
-            <!--<ModelVisual3D x:Name="Model">
-                <ModelVisual3D.Content>
-                    <GeometryModel3D>
-                        <GeometryModel3D.Geometry>
-                            <MeshGeometry3D 
-                                Positions="0 0 1  1 0 1  0 1 1  1 1 1  0 0 0  1 0 0  0 1 0  1 1 0"
-                                Normals="-1 -1 1  1 -1 1  -1 1 1  1 1 1  -1 -1 -1  1 -1 -1  -1 1 -1  1 1 -1 "
-                                TextureCoordinates="0 0  0 0  0 0  0 0  0 0  0 0  0 0  0 0"
-                                TriangleIndices="0 1 2  1 3 2  2 3 7  2 7 6  1 7 3  1 5 7  6 7 4  7 5 4  0 4 1  1 4 5  2 6 4  0 2 4" />
-                            <MeshGeometry3D
-                                x:Name="investigationObject"/>
-                        </GeometryModel3D.Geometry>
-                        <GeometryModel3D.Material>
-                            <DiffuseMaterial>
-                                <DiffuseMaterial.Brush>
-                                    <SolidColorBrush Color="Crimson" Opacity="1"/>
-                                </DiffuseMaterial.Brush>
-                            </DiffuseMaterial>
-                        </GeometryModel3D.Material>
-                        <GeometryModel3D.Transform>
-                            <TranslateTransform3D
-                                OffsetX="0" OffsetY="0" OffsetZ="0">
-                            </TranslateTransform3D>
-                        </GeometryModel3D.Transform>
-                        <GeometryModel3D.Transform>
-                            <RotateTransform3D>
-                                <RotateTransform3D.Rotation>
-                                    <AxisAngleRotation3D Axis="0 1 0" Angle="65">
-                                        
-                                    </AxisAngleRotation3D>
-                                </RotateTransform3D.Rotation>
-                            </RotateTransform3D>
-                        </GeometryModel3D.Transform>
-                    </GeometryModel3D>
-                </ModelVisual3D.Content>
-            </ModelVisual3D>-->
         </Viewport3D>
         <ToolBarTray Margin="0,0,0,0" Background="Transparent" Height="27" VerticalAlignment="Top">
             <ToolBar Band="1" BandIndex="1" Background="#888e92" Height="27">
@@ -68,6 +33,9 @@
                 <Button x:Name="Reset_Viewpoint" ToolTip="Reset View" Click="ResetViewpoint" MinWidth="22" MinHeight="22">
                     <Image Source="/Icons/CubeDimension/CubeDimension_16x.png" />
                 </Button>
+                <Button x:Name="Light_Position" ToolTip="Reposition Directional Light" Click="PositionLightBox" MinWidth="22" MinHeight="22">
+                    <Image Source="/Icons/LightSwitch/LightSwitch_16x.png" />
+                </Button>
                 <Separator>
 
                 </Separator>
@@ -76,11 +44,49 @@
                 </Button>
             </ToolBar>
         </ToolBarTray>
-        <ListBox x:Name="ParamListBox" HorizontalAlignment="Left" Height="100" Margin="34,27,0,0" VerticalAlignment="Top" Width="200" Visibility="Visible" BorderThickness="1.5" Background="#686e72" BorderBrush="#888e92">
-            <StackPanel Orientation="Horizontal" Margin="2">
-                <Label Content="Sim Dimesions  x: " Foreground="White"></Label>
-                <TextBox Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap"/>
-            </StackPanel>        
+        <ListBox x:Name="LightPositionBox" HorizontalAlignment="Left" Height="38" Margin="12,27,0,0" VerticalAlignment="Top" Width="300" Visibility="Collapsed" BorderThickness="1.5" Background="#686e72" BorderBrush="#888e92" HorizontalContentAlignment="Center">
+            <ListBox.Resources>
+                <Style TargetType="ListBox">
+                    <Style.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="5"/>
+                        </Style>
+                    </Style.Resources>
+                </Style>
+            </ListBox.Resources>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
+                <Label Content="Light Direction  x:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="xLightDirection" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetXLightDirection"/>
+                <Label Content="y:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="yLightDirection" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetYLightDirection"/>
+                <Label Content="z:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="zLightDirection" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetZLightDirection"/>
+            </StackPanel>
+        </ListBox>
+        <ListBox x:Name="ParamListBox" HorizontalAlignment="Left" Height="70" Margin="34,27,0,0" VerticalAlignment="Top" Width="300" Visibility="Collapsed" BorderThickness="1.5" Background="#686e72" BorderBrush="#888e92" HorizontalContentAlignment="Center">
+            <ListBox.Resources>
+                <Style TargetType="ListBox">
+                    <Style.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="5"/>
+                        </Style>
+                    </Style.Resources>
+                </Style>
+            </ListBox.Resources>
+            
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
+                <Label Content="Sim Dimesions  x:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="xDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <Label Content="y:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="yDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <Label Content="z:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="zDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Sim Resolution  Cells/unit:" Foreground="White" Margin="1"/>
+                <TextBox x:Name="Resolution" Width="50" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+            </StackPanel>
         </ListBox>
     </Grid>
 </Window>

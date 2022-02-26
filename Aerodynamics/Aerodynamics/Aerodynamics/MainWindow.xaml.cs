@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.IO;
 using Microsoft.Win32;
 using System.Windows.Media.Media3D;
+using System.Text.RegularExpressions;
 
 namespace Aerodynamics
 {
@@ -41,14 +42,22 @@ namespace Aerodynamics
         List<List<List<Vector3D>>> cellVelocity = new List<List<List<Vector3D>>>();
         List<List<List<double>>> cellDensity = new List<List<List<double>>>();
 
+        Regex numericRegex = new Regex("^-{0,1}[0-9]*$");
+
         public MainWindow()
         {
             InitializeComponent();
+            viewport = this.scene;
+
             this.KeyDown += new KeyEventHandler(MainWindow_KeyDown);
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
             this.MouseWheel += new MouseWheelEventHandler(MainWindow_MouseWheel);
             this.MouseMove += new MouseEventHandler(MainWindow_MouseMove);
             this.MouseDown += new MouseButtonEventHandler(MainWindow_MouseDown);
+
+            this.xLightDirection.Text = this.light.Direction.X.ToString();
+            this.yLightDirection.Text = this.light.Direction.Y.ToString();
+            this.zLightDirection.Text = this.light.Direction.Z.ToString();
         }
 
 
@@ -157,14 +166,21 @@ namespace Aerodynamics
 
         private void MainWindow_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(Math.Abs(Mouse.GetPosition(this.ParamListBox).X - 50) > 50 || Math.Abs(Mouse.GetPosition(this.ParamListBox).Y - 50) > 50)
+            if((Math.Abs(Mouse.GetPosition(this.ParamListBox).X - 150) > 150 || Math.Abs(Mouse.GetPosition(this.ParamListBox).Y - 35) > 35) && this.ParamListBox.Visibility == Visibility.Visible)
             {
                 this.ParamListBox.Visibility = Visibility.Collapsed;
+            }
+            if((Math.Abs(Mouse.GetPosition(this.LightPositionBox).X - 150) > 150 || Math.Abs(Mouse.GetPosition(this.LightPositionBox).Y - 19) > 19) && this.LightPositionBox.Visibility == Visibility.Visible)
+            {
+                this.LightPositionBox.Visibility = Visibility.Collapsed;
             }
         }
 
         private void OpenFileExplorer(object sender, RoutedEventArgs e)
         {
+            this.ParamListBox.Visibility = Visibility.Collapsed;
+            this.LightPositionBox.Visibility = Visibility.Collapsed;
+
             //File opening
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Wavefront files (*.obj)|*.obj|All files (*.*)|*.*";
@@ -175,7 +191,6 @@ namespace Aerodynamics
                 facePoints = new List<int>();
                 //normals = "";
                 //textureVertices = "";
-                viewport = this.scene;
                 viewport.Children.Remove(mv3d);
 
                 //Opening .obj file format
@@ -266,11 +281,18 @@ namespace Aerodynamics
                     }
                 }
                 viewport.Children[viewport.Children.IndexOf(mv3d)].Transform = new TranslateTransform3D(Vector3D.Multiply(maxBound+minBound, -0.5));
+                this.xDimension.Text = (Math.Round(maxBound.X - minBound.X) + 3).ToString();
+                this.yDimension.Text = (Math.Round(maxBound.Y - minBound.Y) + 3).ToString();
+                this.zDimension.Text = (Math.Round(maxBound.Z - minBound.Z) + 3).ToString();
+                this.Resolution.Text = 100.ToString();
             }
         }
 
         void ResetViewpoint(object sender, RoutedEventArgs e)
         {
+            this.ParamListBox.Visibility = Visibility.Collapsed;
+            this.LightPositionBox.Visibility = Visibility.Collapsed;
+
             mainCam.Position = new Point3D(10, 0, 0);
             mainCam.LookDirection = new Vector3D(-1, 0, 0);
             mainCam.UpDirection = new Vector3D(0, 1, 0);
@@ -278,9 +300,25 @@ namespace Aerodynamics
             distanceToCentre = 10;
         }
 
+        void PositionLightBox(object sender, RoutedEventArgs e)
+        {
+            this.ParamListBox.Visibility = Visibility.Collapsed;
+
+            if (this.LightPositionBox.Visibility == Visibility.Collapsed)
+            {
+                this.LightPositionBox.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.LightPositionBox.Visibility = Visibility.Collapsed;
+            }
+        }
+
         void ParamBox(object sender, RoutedEventArgs e)
         {
-            if(this.ParamListBox.Visibility == Visibility.Collapsed)
+            this.LightPositionBox.Visibility = Visibility.Collapsed;
+
+            if (this.ParamListBox.Visibility == Visibility.Collapsed)
             {
                 this.ParamListBox.Visibility = Visibility.Visible;
             }
@@ -289,6 +327,27 @@ namespace Aerodynamics
                 this.ParamListBox.Visibility = Visibility.Collapsed;
             }
         }
+
+        void NumericInputSanitisation(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !numericRegex.IsMatch(e.Text);
+        }
+
+        void SetXLightDirection(object sender, TextChangedEventArgs e)
+        {
+            this.light.Direction = new Vector3D(int.Parse(this.xLightDirection.Text), this.light.Direction.Y, this.light.Direction.Z);
+        }
+        void SetYLightDirection(object sender, TextChangedEventArgs e)
+        {
+            this.light.Direction = new Vector3D(this.light.Direction.X, int.Parse(this.yLightDirection.Text), this.light.Direction.Z);
+        }
+        void SetZLightDirection(object sender, TextChangedEventArgs e)
+        {
+            this.light.Direction = new Vector3D(this.light.Direction.X, this.light.Direction.Y, int.Parse(this.zLightDirection.Text));
+            Console.WriteLine("Yes");
+        }
+
+
         void RotateCam(PerspectiveCamera cam, Vector3D axis, double degrees, Point3D rotateAround)
         {
             RotateTransform3D rot = new RotateTransform3D(new AxisAngleRotation3D(axis, degrees), rotateAround);
