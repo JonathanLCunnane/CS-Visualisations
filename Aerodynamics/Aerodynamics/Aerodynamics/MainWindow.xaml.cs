@@ -16,6 +16,7 @@ using System.IO;
 using Microsoft.Win32;
 using System.Windows.Media.Media3D;
 using System.Text.RegularExpressions;
+using System.Windows.Threading;
 
 namespace Aerodynamics
 {
@@ -26,23 +27,31 @@ namespace Aerodynamics
     {
         List<Point3D> geometricVertices;
         List<Point3D> faces;
-        //string normals;
-        //string textureVertices;
-        //Model3DGroup model3DGroup = new Model3DGroup();
-        //MeshGeometry3D mesh = new MeshGeometry3D();
+
         Viewport3D viewport;
+
         GeometryModel3D model = new GeometryModel3D();
         List<int> facePoints;
         ModelVisual3D mv3d = new ModelVisual3D();
+
         int maxRotationSpeed = 4;
         float distanceToCentre = 10;
         Point3D centre = new Point3D(0, 0, 0);
         Point previousMousePoint;
 
-        List<List<List<Vector3D>>> cellVelocity = new List<List<List<Vector3D>>>();
-        List<List<List<double>>> cellDensity = new List<List<List<double>>>();
+        DispatcherTimer dt;
 
-        Regex numericRegex = new Regex("^-{0,1}[0-9]*$");
+        bool playing = false;
+        List<double> currentDensity;
+        List<double> previousDensity;
+        List<Vector3D> currentVelocity;
+        List<Vector3D> previousVelocity;
+        List<bool> occupiedCells;
+        
+        Vector3D simDimensions = new Vector3D(0, 0, 0);
+        int simResolution = 100;
+
+        Regex numericRegex = new Regex("[0-9]");
 
         public MainWindow()
         {
@@ -55,11 +64,14 @@ namespace Aerodynamics
             this.MouseMove += new MouseEventHandler(MainWindow_MouseMove);
             this.MouseDown += new MouseButtonEventHandler(MainWindow_MouseDown);
 
+            dt = new DispatcherTimer();
+            dt.Tick += new EventHandler(SimTick);
+            dt.Interval = TimeSpan.FromMilliseconds(10);
+
             this.xLightDirection.Text = this.light.Direction.X.ToString();
             this.yLightDirection.Text = this.light.Direction.Y.ToString();
             this.zLightDirection.Text = this.light.Direction.Z.ToString();
         }
-
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
@@ -281,10 +293,12 @@ namespace Aerodynamics
                     }
                 }
                 viewport.Children[viewport.Children.IndexOf(mv3d)].Transform = new TranslateTransform3D(Vector3D.Multiply(maxBound+minBound, -0.5));
-                this.xDimension.Text = (Math.Round(maxBound.X - minBound.X) + 3).ToString();
-                this.yDimension.Text = (Math.Round(maxBound.Y - minBound.Y) + 3).ToString();
-                this.zDimension.Text = (Math.Round(maxBound.Z - minBound.Z) + 3).ToString();
-                this.Resolution.Text = 100.ToString();
+                simDimensions = new Vector3D(Math.Round(maxBound.X - minBound.X) + 3, Math.Round(maxBound.Y - minBound.Y) + 3, Math.Round(maxBound.Z - minBound.Z) + 3);
+                simResolution = 100;
+                this.xDimension.Text = simDimensions.X.ToString();
+                this.yDimension.Text = simDimensions.Y.ToString();
+                this.zDimension.Text = simDimensions.Z.ToString();
+                this.Resolution.Text = simResolution.ToString();
             }
         }
 
@@ -298,6 +312,28 @@ namespace Aerodynamics
             mainCam.UpDirection = new Vector3D(0, 1, 0);
             centre = new Point3D(0, 0, 0);
             distanceToCentre = 10;
+        }
+
+        void PausePlaySim(object sender, RoutedEventArgs e)
+        {
+            this.ParamListBox.Visibility = Visibility.Collapsed;
+            this.LightPositionBox.Visibility = Visibility.Collapsed;
+
+            Image image = (Image)this.PlayStopSim.Content;
+            if (playing)
+            {
+                image.Source = new BitmapImage( new Uri(@"\Icons\StartWithoutDebug\StartWithoutDebug_16x.png", UriKind.Relative));
+                image.ToolTip = "Play Sim";
+                dt.Stop();
+            }
+            else
+            {
+                image.Source = new BitmapImage(new Uri(@"\Icons\Pause\Pause_16x.png", UriKind.Relative));
+                image.ToolTip = "Stop Sim";
+                SimBegin();
+                dt.Start();
+            }
+            playing = !playing;
         }
 
         void PositionLightBox(object sender, RoutedEventArgs e)
@@ -330,23 +366,92 @@ namespace Aerodynamics
 
         void NumericInputSanitisation(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = !numericRegex.IsMatch(e.Text);
+            TextBox tb= (TextBox)sender;
+            if(numericRegex.IsMatch(tb.Text + e.Text) || ((tb.Text+e.Text).Substring(0,1) == "-" && ((tb.Text+e.Text).Length == 1 || numericRegex.IsMatch((tb.Text + e.Text).Substring(1)))))
+            {
+                e.Handled = false;
+            }
+            else
+            {
+                e.Handled = true;
+            }
         }
 
         void SetXLightDirection(object sender, TextChangedEventArgs e)
         {
-            this.light.Direction = new Vector3D(int.Parse(this.xLightDirection.Text), this.light.Direction.Y, this.light.Direction.Z);
+            if(this.xLightDirection.Text.Length > 0 && this.xLightDirection.Text != "-")
+            {
+                this.light.Direction = new Vector3D(int.Parse(this.xLightDirection.Text), this.light.Direction.Y, this.light.Direction.Z);
+            }
         }
         void SetYLightDirection(object sender, TextChangedEventArgs e)
         {
-            this.light.Direction = new Vector3D(this.light.Direction.X, int.Parse(this.yLightDirection.Text), this.light.Direction.Z);
+            if(this.yLightDirection.Text.Length > 0 && this.yLightDirection.Text != "-")
+            {
+                this.light.Direction = new Vector3D(this.light.Direction.X, int.Parse(this.yLightDirection.Text), this.light.Direction.Z);
+            }
         }
         void SetZLightDirection(object sender, TextChangedEventArgs e)
         {
-            this.light.Direction = new Vector3D(this.light.Direction.X, this.light.Direction.Y, int.Parse(this.zLightDirection.Text));
-            Console.WriteLine("Yes");
+            if(this.zLightDirection.Text.Length > 0 && this.zLightDirection.Text != "-")
+            {
+                this.light.Direction = new Vector3D(this.light.Direction.X, this.light.Direction.Y, int.Parse(this.zLightDirection.Text));
+            }
         }
 
+        void SetSimXDimension(object sender, TextChangedEventArgs e)
+        {
+            if(this.xDimension.Text.Length > 0 && this.xDimension.Text != "")
+            {
+                int value = int.Parse(this.xDimension.Text);
+                if (value > simDimensions.X)
+                {
+                    simDimensions.X = value;
+                }
+                
+            }
+        }
+        void SetSimYDimension(object sender, TextChangedEventArgs e)
+        {
+            
+            if (this.yDimension.Text.Length > 0 && this.yDimension.Text != "")
+            {
+                int value = int.Parse(this.yDimension.Text);
+                if (value > simDimensions.Y)
+                {
+                    simDimensions.Y = value;
+                }
+            }
+        }
+        void SetSimZDimension(object sender, TextChangedEventArgs e)
+        {
+            if (this.zDimension.Text.Length > 0 && this.zDimension.Text != "")
+            {
+                int value = int.Parse(this.zDimension.Text);
+                if (value > simDimensions.Z)
+                {
+                    simDimensions.Z = value;
+                }
+            }
+        }
+
+        void SetSimResolution(object sender, TextChangedEventArgs e)
+        {
+           
+            if (this.Resolution.Text.Length > 0 && this.Resolution.Text != "")
+            {
+                int value = int.Parse(this.Resolution.Text);
+                if (value > 0)
+                {
+                    simResolution = value;
+                }
+            }
+        }
+
+        int IndexReturn(int x, int y, int z, Vector3D dimensions)
+        {
+            return (int)(x + (dimensions.Y + 2) * simResolution * y + (dimensions.Z + 2) * simResolution * z );
+        }
 
         void RotateCam(PerspectiveCamera cam, Vector3D axis, double degrees, Point3D rotateAround)
         {
@@ -378,6 +483,18 @@ namespace Aerodynamics
             {
                 RotateCam(c, Vector3D.CrossProduct(c.LookDirection, c.UpDirection), -(degrees - limitingValue), centre);
             }
+        }
+
+        void SimBegin()
+        {
+            currentDensity = new List<double>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
+            currentVelocity = new List<Vector3D>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
+            occupiedCells = new List<bool>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
+            MeshGeometry3D mg3d = (MeshGeometry3D)((GeometryModel3D)mv3d.Content).Geometry;
+        }
+        void SimTick(object sender, EventArgs e)
+        {
+            
         }
     }
 }

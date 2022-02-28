@@ -83,6 +83,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Icons\Pause\Pause_16x.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Icons\StartWithoutDebug\StartWithoutDebug_16x.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -111,6 +119,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Icons\StartWithoutDebug\StartWithoutDebug_16x.png" />
+    <Resource Include="Icons\Pause\Pause_16x.png" />
+    <Content Include="Icons\Pause\Pause_16x.svg" />
+    <Content Include="Icons\StartWithoutDebug\StartWithoutDebug_16x.svg" />
     <Resource Include="Icons\CubeDimension\CubeDimension_16x.png" />
     <Content Include="Icons\CubeDimension\CubeDimension_16x.svg" />
     <Resource Include="Icons\OpenFolder\OpenFolder_16x.png" />

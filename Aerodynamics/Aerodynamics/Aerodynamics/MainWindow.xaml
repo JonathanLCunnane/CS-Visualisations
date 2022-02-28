@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:Aerodynamics"
         mc:Ignorable="d"
         Title="MainWindow" Height="630" Width="1120">
-    <Grid Background="#383e42">
+    <Grid x:Name="Grid" Background="#383e42">
         <Viewport3D Name="scene" >
             <Viewport3D.Camera>
                 <PerspectiveCamera x:Name="mainCam" Position="10,0,0" LookDirection="-1 0 0">
@@ -41,6 +41,12 @@
                 </Separator>
                 <Button x:Name="Sim_Parameters" ToolTip="Edit Sim Params" Click="ParamBox" MinWidth="22" MinHeight="22">
                     <Image Source="/Icons/EditDimension/EditDimension_16x.png" />
+                </Button>
+                <Separator>
+
+                </Separator>
+                <Button x:Name="PlayStopSim" ToolTip="Play Sim" Click="PausePlaySim" MinWidth="22" MinHeight="22">
+                    <Image Source="/Icons/StartWithoutDebug/StartWithoutDebug_16x.png" />
                 </Button>
             </ToolBar>
         </ToolBarTray>
@@ -77,15 +83,15 @@
             
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
                 <Label Content="Sim Dimesions  x:" Foreground="White" Margin="1"/>
-                <TextBox x:Name="xDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <TextBox x:Name="xDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetSimXDimension"/>
                 <Label Content="y:" Foreground="White" Margin="1"/>
-                <TextBox x:Name="yDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <TextBox x:Name="yDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetSimYDimension"/>
                 <Label Content="z:" Foreground="White" Margin="1"/>
-                <TextBox x:Name="zDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <TextBox x:Name="zDimension" Width="25" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetSimZDimension"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Sim Resolution  Cells/unit:" Foreground="White" Margin="1"/>
-                <TextBox x:Name="Resolution" Width="50" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation"/>
+                <TextBox x:Name="Resolution" Width="50" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="WrapWithOverflow" Margin="1" PreviewTextInput="NumericInputSanitisation" TextChanged="SetSimResolution"/>
             </StackPanel>
         </ListBox>
     </Grid>
