@@ -21,6 +21,13 @@
                     </DirectionalLight>
                 </ModelVisual3D.Content>
             </ModelVisual3D>
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <AmbientLight x:Name="ambientLight" Color="#252525">
+
+                    </AmbientLight>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
         </Viewport3D>
         <ToolBarTray Margin="0,0,0,0" Background="Transparent" Height="27" VerticalAlignment="Top">
             <ToolBar Band="1" BandIndex="1" Background="#888e92" Height="27">

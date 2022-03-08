@@ -49,7 +49,7 @@ namespace Aerodynamics
         List<bool> occupiedCells;
         
         Vector3D simDimensions = new Vector3D(0, 0, 0);
-        int simResolution = 100;
+        int simResolution = 10;
 
         Regex numericRegex = new Regex("[0-9]");
 
@@ -126,7 +126,7 @@ namespace Aerodynamics
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
             //Mouse button and movement camera controls.
-            if(e.RightButton == MouseButtonState.Pressed)
+            if(e.RightButton == MouseButtonState.Pressed || e.LeftButton == MouseButtonState.Pressed)
             {
                 if(previousMousePoint != new Point())
                 {
@@ -149,7 +149,7 @@ namespace Aerodynamics
                     }
                     Vector3D vu = mainCam.UpDirection;
                     Vector3D vf = mainCam.LookDirection;
-                    if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+                    if (e.LeftButton == MouseButtonState.Pressed)
                     {
                         //Panning
                         double speed = 0.05;
@@ -294,7 +294,7 @@ namespace Aerodynamics
                 }
                 viewport.Children[viewport.Children.IndexOf(mv3d)].Transform = new TranslateTransform3D(Vector3D.Multiply(maxBound+minBound, -0.5));
                 simDimensions = new Vector3D(Math.Round(maxBound.X - minBound.X) + 3, Math.Round(maxBound.Y - minBound.Y) + 3, Math.Round(maxBound.Z - minBound.Z) + 3);
-                simResolution = 100;
+                simResolution = 10;
                 this.xDimension.Text = simDimensions.X.ToString();
                 this.yDimension.Text = simDimensions.Y.ToString();
                 this.zDimension.Text = simDimensions.Z.ToString();
@@ -325,6 +325,7 @@ namespace Aerodynamics
                 image.Source = new BitmapImage( new Uri(@"\Icons\StartWithoutDebug\StartWithoutDebug_16x.png", UriKind.Relative));
                 image.ToolTip = "Play Sim";
                 dt.Stop();
+                SimEnd();
             }
             else
             {
@@ -485,16 +486,113 @@ namespace Aerodynamics
             }
         }
 
+        List<Vector3D> TriangleIntercept(Vector3D v1, Vector3D v2, double resolution)
+        {
+            v1 = new Vector3D(Math.Round(v1.X * resolution),Math.Round(v1.Y * resolution),Math.Round(v1.Z * resolution));
+            v2 = new Vector3D(Math.Round(v2.X * resolution),Math.Round(v2.Y * resolution),Math.Round(v2.Z * resolution));
+            double deltaX = v2.X - v1.X;
+            double deltaY = v2.Y - v1.Y;
+            double deltaZ = v2.Z - v1.Z;
+            double size = Math.Max(Math.Abs(deltaX) + 1, Math.Max(Math.Abs(deltaY) + 1, Math.Abs(deltaZ) + 1));
+            double mx = Math.Abs(deltaX) * 2;
+            double my = Math.Abs(deltaY) * 2;
+            double mz = Math.Abs(deltaZ) * 2;
+            int signumX = Math.Sign(deltaX);
+            int signumY = Math.Sign(deltaY);
+            int signumZ = Math.Sign(deltaZ);
+            List<Vector3D> returnList = new List<Vector3D>();
+            int i = 1;
+            if(mx >= Math.Max(my, mz))
+            {
+                double yDelta = my - mx / 2;
+                double zDelta = mz - mx / 2;
+
+                while (v1.X != v2.X)
+                {
+                    returnList.Add(new Vector3D(v1.X, v1.Y, v1.Z));
+                    i++;
+                    if(yDelta >= 0)
+                    {
+                        v1.Y += signumY;
+                    }
+                    if(zDelta >= 0)
+                    {
+                        v1.Z += signumZ;
+                    }
+                    v1.X += signumX;
+                    yDelta += my;
+                    zDelta += mz;
+                }
+            }
+            else if(my >= mz)
+            {
+                double xDelta = mx - my / 2;
+                double zDelta = mz - my / 2;
+
+                while (v1.Y != v2.Y)
+                {
+                    returnList.Add(new Vector3D(v1.X, v1.Y, v1.Z));
+                    i++;
+                    if(xDelta >= 0)
+                    {
+                        v1.X += signumX;
+                    }
+                    if(zDelta >= 0)
+                    {
+                        v1.Z += signumZ;
+                    }
+                    v1.Y += signumY;
+                    xDelta += mx;
+                    zDelta += mz;
+                }
+            }
+            else
+            {
+                double xDelta = mx - mz / 2;
+                double yDelta = my - mz / 2;
+
+                while (v1.Z != v2.Z)
+                {
+                    returnList.Add(new Vector3D(v1.X, v1.Y, v1.Z));
+                    i++;
+                    if (xDelta >= 0)
+                    {
+                        v1.X += signumX;
+                    }
+                    if (yDelta >= 0)
+                    {
+                        v1.Y += signumY;
+                    }
+                    v1.Z += signumZ;
+                    xDelta += mx;
+                    yDelta += my;
+                }
+            }
+            return returnList;
+        }
+
         void SimBegin()
         {
             currentDensity = new List<double>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
+            previousDensity = new List<double>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
             currentVelocity = new List<Vector3D>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
+            previousVelocity = new List<Vector3D>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
             occupiedCells = new List<bool>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
             MeshGeometry3D mg3d = (MeshGeometry3D)((GeometryModel3D)mv3d.Content).Geometry;
         }
         void SimTick(object sender, EventArgs e)
         {
             
+        }
+
+        void SimEnd()
+        {
+            currentDensity = null;
+            previousDensity = null;
+            currentVelocity = null;
+            previousVelocity = null;
+            occupiedCells = null;
+            GC.Collect();
         }
     }
 }
