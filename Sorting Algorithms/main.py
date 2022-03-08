@@ -2,19 +2,20 @@
 # "Inspiration", or more accurately, an example of what the end goal is can be seen in videos such as this:
 # https://www.youtube.com/watch?v=kPRA0W1kECg&ab_channel=TimoBingmann
 
+from lib2to3.pgen2.token import NUMBER
 import pygame
 import random
-import time
 
 pygame.init()
 
 clock = pygame.time.Clock()
 
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 1500
 SCREEN_HEIGHT = 500
-FPS = 30
+NUMBER_OF_COLUMNS = 200
+FPS = int(0.6 * NUMBER_OF_COLUMNS)
 
-COLUMN_WIDTH = SCREEN_WIDTH / 100  # Allows 100 rectangles / columns to be fit within the current screen size.
+COLUMN_WIDTH = SCREEN_WIDTH / NUMBER_OF_COLUMNS  # Allows 100 rectangles / columns to be fit within the current screen size.
 
 BLACK = (0, 0, 0)  # Colour constants.
 WHITE = (255, 255, 255)
@@ -44,28 +45,33 @@ def random_colour():
     return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 
+def random_columns():  # Test to generate a screen of randomly sized columns. Works well so far. Generates a new 'seed' of columns every second.    
+    columns = []
+    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / NUMBER_OF_COLUMNS)):
+        height = random.randint(0, 500)
+        columns.append(Column(i, height))
+    
+    return columns
+
+
 def bubble_sort(items):
-    passes = 0
 
-    for pass_length in range(len(items), 0, -1):
-        index = 0
-        passes += 1
-        current_items = items.copy()
-        while index < pass_length - 1:  
-            if items[index].height > items[index + 1].height:
-                temp = items[index + 1]
-                items[index + 1] = items[index]
-                items[index] = temp
-            index += 1
+    index = 0
+    while index < len(items) - 1:  
+        if items[index].height > items[index + 1].height:
+            temp = items[index + 1]
+            items[index + 1] = items[index]
+            items[index + 1].colour = RED
+            refresh_columns(items)
+            items[index + 1].colour = WHITE
+            refresh_columns(items)
+            items[index] = temp
+        index += 1
         
-        if current_items == items:
-            break
 
-    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / len(items))):  # Changes the position attribute of the columns to match their
-        items[i // 8].position = i # new pos.
-    
-    print("{} passes were made.".format(passes))
-    
+    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / NUMBER_OF_COLUMNS)):  # Changes the position attribute of the columns to match their
+        items[i // (SCREEN_WIDTH // NUMBER_OF_COLUMNS)].position = i # new pos.
+        
     return items
 
 
@@ -80,15 +86,6 @@ def refresh_columns(columns):
     return
 
 
-def random_columns():  # Test to generate a screen of randomly sized columns. Works well so far. Generates a new 'seed' of columns every second.    
-    columns = []
-    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / 100)):
-        height = random.randint(0, 500)
-        columns.append(Column(i, height))
-    
-    return columns
-
-
 def main():
     run = True
     columns = random_columns()
@@ -101,14 +98,15 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     print("Key pressed.")
-                    columns = bubble_sort(columns)
-                    refresh_columns(columns)
-        
+                    for i in range(NUMBER_OF_COLUMNS + 1):
+                        columns = bubble_sort(columns)
+                        # clock.tick(FPS)
+                        refresh_columns(columns)
+            
         refresh_columns(columns)
         pygame.display.update()
-        clock.tick(FPS)
+        #clock.tick(FPS)
         
     pygame.quit()
-
 
 main()
