@@ -33,9 +33,11 @@ class Column:
         self.height = height
         self.colour = colour
 
-
-    def update_column(self):
-        draw_rectangle(self)
+    def draw_column(self):  # Pygame draws from the top left hand side of the screen, this is the engine's 'origin' in terms of coordinates.
+        pygame.draw.rect(SCREEN, self.colour, (self.position, SCREEN_HEIGHT - self.height, COLUMN_WIDTH, self.height))
+        # Due to this, everything needs to be offset downwards, as the shapes are drawn
+        # the top downwards, rather than what you would imagine, which is from the bottom to the top.
+        # This is the reason for the top right position being set to 'SCREEN_HEIGHT -height'.
 
 
 def random_colour():
@@ -58,22 +60,20 @@ def bubble_sort(items):
         
         if current_items == items:
             break
+
+    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / len(items))):  # Changes the position attribute of the columns to match their
+        items[i // 8].position = i # new pos.
     
     print("{} passes were made.".format(passes))
     
     return items
 
 
-def draw_rectangle(column):  # Pygame draws from the top left hand side of the screen, this is the engine's 'origin' in terms of coordinates.
-    pygame.draw.rect(SCREEN, column.colour, (column.position, SCREEN_HEIGHT - column.height, COLUMN_WIDTH, column.height))  # Due to this, everything needs to be offset downwards, as the shapes are drawn
-    # the top downwards, rather than what you would imagine, which is from the bottom to the top. This is the reason for the top right position being set to 'SCREEN_HEIGHT -height'.
-    
-
 def refresh_columns(columns):
     SCREEN.fill(BLACK)
     
     for column in columns:
-        column.update_column()
+        column.draw_column()
     
     pygame.display.update()
     
@@ -82,7 +82,7 @@ def refresh_columns(columns):
 
 def random_columns():  # Test to generate a screen of randomly sized columns. Works well so far. Generates a new 'seed' of columns every second.    
     columns = []
-    for i in range(0, 800, 8):
+    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / 100)):
         height = random.randint(0, 500)
         columns.append(Column(i, height))
     
@@ -108,7 +108,6 @@ def main():
         pygame.display.update()
         clock.tick(FPS)
         
-
     pygame.quit()
 
 
