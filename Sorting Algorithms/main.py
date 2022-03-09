@@ -113,9 +113,6 @@ def main():
     run = True
     columns = random_columns()
 
-    display_column_order(columns)
-
-
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
