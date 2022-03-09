@@ -23,13 +23,16 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
+COLUMN_COLOUR = WHITE
+BG_COLOUR = BLACK
+
 
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-SCREEN.fill(BLACK)
+SCREEN.fill(BG_COLOUR)
 
 
 class Column:
-    def __init__(self, position, height, colour=WHITE):
+    def __init__(self, position, height, colour=COLUMN_COLOUR):
         self.position = position
         self.height = height
         self.colour = colour
@@ -41,42 +44,51 @@ class Column:
         # This is the reason for the top right position being set to 'SCREEN_HEIGHT -height'.
 
 
-def random_colour():
-    return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-
 def random_columns():  # Test to generate a screen of randomly sized columns. Works well so far. Generates a new 'seed' of columns every second.    
     columns = []
     for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / NUMBER_OF_COLUMNS)):
-        height = random.randint(0, 500)
+        height = random.randint(0, SCREEN_HEIGHT)
         columns.append(Column(i, height))
     
     return columns
 
 
 def bubble_sort(items):
+    columns_sorted = True
 
-    index = 0
-    while index < len(items) - 1:  
+    for index in range(len(items) - 1):
         if items[index].height > items[index + 1].height:
-            temp = items[index + 1]
-            items[index + 1] = items[index]
-            items[index + 1].colour = RED
-            refresh_columns(items)
-            items[index + 1].colour = WHITE
-            refresh_columns(items)
-            items[index] = temp
-        index += 1
+            columns_sorted = False
+            temp = items[index + 1]  # Copy of the 2nd column.
+            items[index].colour = RED # Changes colour of the 1st column.
+            items[index + 1] = items[index] # Replaces the 2nd column with the 1st column.
+            
+            refresh_columns(items)  # Update screen.
+            items[index + 1].colour = COLUMN_COLOUR # Changes colour of the new 2nd column.
+            
+            refresh_columns(items)  # Update screen.
+            items[index] = temp # Replaces the 1st column with the previous 2nd column.
+        
         
 
     for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / NUMBER_OF_COLUMNS)):  # Changes the position attribute of the columns to match their
         items[i // (SCREEN_WIDTH // NUMBER_OF_COLUMNS)].position = i # new pos.
         
-    return items
+    return items, columns_sorted
+
+
+def refresh_sorted_columns(columns):
+    SCREEN.fill(BG_COLOUR)
+
+    for column in columns:
+        column.colour = GREEN
+        column.draw_column()
+    
+    pygame.display.update()
 
 
 def refresh_columns(columns):
-    SCREEN.fill(BLACK)
+    SCREEN.fill(BG_COLOUR)
     
     for column in columns:
         column.draw_column()
@@ -86,9 +98,24 @@ def refresh_columns(columns):
     return
 
 
+def display_column_order(columns):
+    heights = []
+
+    for column in columns:
+        heights.append(column.height)
+    
+    print(f"The heights of the columns are {heights}.")
+
+    return
+
+
 def main():
     run = True
     columns = random_columns()
+
+    display_column_order(columns)
+
+
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -97,15 +124,22 @@ def main():
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
+                    columns_sorted = False
+                    
                     print("Key pressed.")
-                    for i in range(NUMBER_OF_COLUMNS + 1):
-                        columns = bubble_sort(columns)
-                        # clock.tick(FPS)
+                    
+                    while not columns_sorted:
+                        columns, columns_sorted = bubble_sort(columns)
                         refresh_columns(columns)
+                    
+                    refresh_sorted_columns(columns)
+                
+                if event.key == pygame.K_RIGHT:
+                    display_column_order(columns)
             
         refresh_columns(columns)
         pygame.display.update()
-        #clock.tick(FPS)
+        clock.tick(FPS)
         
     pygame.quit()
 
