@@ -1,17 +1,13 @@
-class Tree:
-    def __init__(self, value):
-        self.left = None
-        self.right = None
-        self.value = value
+class TreePrinter:
+    def __init__(self, root):
+        self.finalString = ""
+        self.root = root
 
-    def getNodeValue(self):
-        return self.value
-
-    def insert(self, value):
-        if self.left is None:
-            self.left = value
-        else:
-            self.right = value
+    def postOrderTraversal(self, node):
+        if node is not None:
+            self.finalString += "|" + str(node.value)
+            self.postOrderTraversal(node.left)
+            self.postOrderTraversal(node.right)
 
     def printTree(self, method):
         """
@@ -27,6 +23,8 @@ class Tree:
         elif method == 'i':
             pass
         elif method == 'p':
-            pass
+            self.finalString = ""
+            self.postOrderTraversal(self.root)
+            return self.finalString
         else:
             return "Dumbass"

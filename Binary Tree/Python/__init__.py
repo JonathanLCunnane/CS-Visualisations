@@ -1,4 +1,7 @@
-from Tree import Tree
+from tree import Tree
+from tree_printer import TreePrinter
 
 root = Tree(10)
-root.insert(3)
+root.insert(Tree(3))
+printer = TreePrinter(root)
+print(printer.printTree('p'))
