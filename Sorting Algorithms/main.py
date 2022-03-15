@@ -2,7 +2,6 @@
 # "Inspiration", or more accurately, an example of what the end goal is can be seen in videos such as this:
 # https://www.youtube.com/watch?v=kPRA0W1kECg&ab_channel=TimoBingmann
 
-from lib2to3.pgen2.token import NUMBER
 import pygame
 import random
 
@@ -25,7 +24,6 @@ BLUE = (0, 0, 255)
 
 COLUMN_COLOUR = WHITE
 BG_COLOUR = BLACK
-
 
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 SCREEN.fill(BG_COLOUR)
@@ -86,6 +84,8 @@ def refresh_sorted_columns(columns):
     
     pygame.display.update()
 
+    return
+
 
 def refresh_columns(columns):
     SCREEN.fill(BG_COLOUR)
@@ -141,3 +141,7 @@ def main():
     pygame.quit()
 
 main()
+
+
+
+
