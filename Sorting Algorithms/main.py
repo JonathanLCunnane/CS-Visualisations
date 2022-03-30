@@ -124,15 +124,18 @@ def main():
                     columns_sorted = False
                     
                     print("Key pressed.")
+                    count = 0
                     
                     while not columns_sorted:
                         columns, columns_sorted = bubble_sort(columns)
                         refresh_columns(columns)
+                        count += 1
                     
                     refresh_sorted_columns(columns)
+                    print(f"{count} passes were made.")
                 
-                if event.key == pygame.K_RIGHT:
-                    display_column_order(columns)
+                # if event.key == pygame.K_RIGHT:
+                #     display_column_order(columns)
             
         refresh_columns(columns)
         pygame.display.update()

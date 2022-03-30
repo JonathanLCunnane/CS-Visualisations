@@ -1,0 +1,63 @@
+**COPIED FROM BBC BITESIZE.**
+
+Merge sort
+A merge sort is a more complex sort, but also a highly efficient one.
+
+A merge sort uses a technique called divide and conquer. The list is repeatedly divided into two until all the elements are separated individually. Pairs of elements are then compared, placed into order and combined. The process is then repeated until the list is recompiled as a whole.
+
+Consider this unsorted list:
+
+7, 11, 10, 5, 12, 4, 18, 15
+
+An unsorted list of numbers
+The list is split into half:
+
+7, 11, 10, 5  |  12, 4, 18, 15
+
+An unsorted list of numbers that has been split in half
+The process repeats:
+
+7, 11  |  10, 5  |  12, 4  |  18, 15
+
+An unsorted list of numbers that has been split into four parts
+Until all elements are individually separated:
+
+7 | 11 | 10 | 5 | 12 | 4 | 18 | 15
+
+An unsorted list of numbers that has been split into individual elements
+The algorithm looks at the individual elements and compares them as pairs. Each pair is sorted into order:
+
+7, 11  |  5, 10  |  4, 12  |  15, 18
+
+The top row shows numbers arranged in pairs. 7 and 11, 10 and 5, 12 and 4, 18 and 15. The bottom row shows the pairs arranged with the smaller number first. So 7 and 11, 5 and 10, 4 and 12, 15 and 18
+The pairs are then compared, starting with the first number in each pair. If the left hand number is smaller than the right hand number, it is placed in order. The comparison then moves up to the second number on the left hand side and the process repeats. If the right hand number is smaller, it is placed in order and the comparison moves to the next number on that side.
+
+Here, 7 is the first left hand number and 5 is the first right hand number. 7 is bigger than 5, so 5 is placed in order:
+
+   5
+
+The next right hand number is 10. 7 is smaller than 10, so 7 is placed in order:
+
+    5   7
+
+The next left hand number is 11. 11 is bigger than 10, so 10 is placed in order:
+
+    5   7   10
+
+There are no more right hand numbers to compare, so the remaining left hand numbers are placed in order:
+
+    5   7   10   11
+
+The process is repeated for the initial right hand division:
+
+5, 7, 10, 11  |  4, 12, 15, 18
+
+How the numbers are arranged in numerical order; firstly in pairs and then in a longer list of 4 numbers.
+Eventually the list is recompiled
+
+4, 5, 7, 10, 11, 12 15, 18
+
+The steps of an algorithm arranging numbers numerically from the smallest to the largest. The numbers are arranged in pairs. The pairs are arranged two lists of four numbers and then as one long list
+The list is now sorted into the correct order.
+
+
