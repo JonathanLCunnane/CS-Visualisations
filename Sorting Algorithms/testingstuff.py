@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 import pygame
 import random
 
@@ -41,7 +42,7 @@ class Column:
 
 
 class Button:
-    def __init__(self, colour, x, y, width, height, text = '', font = BUTTON_FONT, textcolour = BLACK, border_colour = ''):
+    def __init__(self, colour, x, y, width, height, text = '', font = BUTTON_FONT, textcolour = BLACK, border_colour=BLACK, border=False, border_thicknesss=2):
         self.colour = colour
         self.x = x
         self.y = y
@@ -51,12 +52,14 @@ class Button:
         self.font = font
         self.textcolour = textcolour
         self.border_colour = border_colour
-        self.outline = outline
+        self.border = border
+        self.border_thickness = border_thicknesss
 
     def draw(self):
         
-        if self.outline:
-
+        if self.border:
+            
+            pygame.draw.rect(SCREEN, self.border_colour, (self.x - self.border_thickness, self.y - self.border_thickness, self.width + (2 * self.border_thickness), self.height + (2 * self.border_thickness)))
             pygame.draw.rect(SCREEN, self.colour, (self.x, self.y, self.width, self.height))
 
         
@@ -122,14 +125,15 @@ def main():
     buttons = []
 
     # Create buttons
-    mergeButton = Button(BLACK, 400, 200, 300, 100, 'Merge Sort', textcolour=WHITE)
-    mergeButton.draw()
+    mergeButton = Button(RED, 400, 200, 300, 100, 'Merge Sort', textcolour=WHITE, border=True, border_colour=WHITE)
+    bubbleButton = Button(RED, 800, 200, 300, 100, 'Bubble Sort', textcolour=WHITE, border=True, border_colour=WHITE)
 
     pygame.display.update()
 
+    buttons.append(mergeButton)
+    buttons.append(bubbleButton)
 
-    # Add buttons to list.
-
+    refresh_items(buttons)  # Draws the buttons onto the screen.
 
     while run:
         # refresh_screen(columns, buttons)
@@ -145,7 +149,8 @@ def main():
             if event.type == pygame.MOUSEMOTION:
                 # Insert hover colour changing.
                 pass
-            
+        
+        pygame.display.update()
 
 main()
 
