@@ -147,7 +147,17 @@ def main():
             
 
             if event.type == pygame.MOUSEMOTION:
-                # Insert hover colour changing.
+            
+                for button in buttons:  # Checks if the mouse is over any of the buttons, causes it to change to green.
+                    if button.isOver(pos):
+                        button.colour = GREEN
+                    else:
+                        button.colour = RED
+
+                refresh_items(buttons)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # Insert clicking to sort options.
                 pass
         
         pygame.display.update()
