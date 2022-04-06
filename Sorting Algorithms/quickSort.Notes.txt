@@ -1,0 +1,11 @@
+Quick sort follows a recursive algorithm. We find the pivot which divides the array into two halves. Anything to the left of the pivot is less than the pivot value, anything
+to the right is greater.
+
+Left pointer and right pointer assigned to either end of the list. The values are compared; if the right pointer's values is less than the left pointer's, they are swapped.
+The left pointer remains in its position whilst the right pointer moves another.
+
+
+
+
+
+

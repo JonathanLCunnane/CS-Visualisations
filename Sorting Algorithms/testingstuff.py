@@ -1,4 +1,4 @@
-from tkinter.tix import Tree
+from ast import Assign
 import pygame
 import random
 
@@ -25,7 +25,7 @@ BG_COLOUR = BLACK
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 SCREEN.fill(BG_COLOUR)
 
-BUTTON_FONT = 'comicsans'
+BUTTON_FONT = 'agency fb'
 
 
 class Column:
@@ -42,7 +42,7 @@ class Column:
 
 
 class Button:
-    def __init__(self, colour, x, y, width, height, text = '', font = BUTTON_FONT, textcolour = BLACK, border_colour=BLACK, border=False, border_thicknesss=2):
+    def __init__(self, colour, x, y, width, height, text = '', font = BUTTON_FONT, textcolour = BLACK, border_colour=BLACK, border=False, border_thicknesss=2,  function=''):
         self.colour = colour
         self.x = x
         self.y = y
@@ -54,6 +54,7 @@ class Button:
         self.border_colour = border_colour
         self.border = border
         self.border_thickness = border_thicknesss
+        self.function = function
 
     def draw(self):
         
@@ -119,14 +120,82 @@ def display_column_order(columns):
     return
 
 
+def bubble_sort(items):
+    columns_sorted = True
+
+    for index in range(len(items) - 1):
+        if items[index].height > items[index + 1].height:
+            columns_sorted = False
+            temp = items[index + 1]  # Copy of the 2nd column.
+            items[index].colour = RED # Changes colour of the 1st column.
+            items[index + 1] = items[index] # Replaces the 2nd column with the 1st column.
+            
+            refresh_items(items)  # Update screen.
+            items[index + 1].colour = COLUMN_COLOUR # Changes colour of the new 2nd column.
+            
+            refresh_items(items)  # Update screen.
+            items[index] = temp # Replaces the 1st column with the previous 2nd column.
+        
+        
+
+    for i in range(0, SCREEN_WIDTH, int(SCREEN_WIDTH / NUMBER_OF_COLUMNS)):  # Changes the position attribute of the columns to match their
+        items[i // (SCREEN_WIDTH // NUMBER_OF_COLUMNS)].position = i # new pos.
+        
+    return items, columns_sorted
+
+
+def merge_sort(items):  # The merge sort algorithm itself.
+    
+    if len(items) > 1:
+        midpoint = len(items) // 2
+        left_half = items[:midpoint]
+        right_half = items[midpoint:]
+
+        merge_sort(left_half)
+        merge_sort(right_half)
+
+        i = 0  # Left half iterator
+        j = 0  # Right half iterator
+
+        k = 0  # Main list iterator
+
+        while i < len(left_half) and j < len(right_half):
+            if left_half[i].height <= right_half[j].height:
+                items[k] = left_half[i]
+                refresh_items(items)
+                i += 1
+            else:
+                items[k] = right_half[j]
+                refresh_items(items)
+                j += 1
+            k += 1
+
+        # For the remaining numbers (in the case of the halves not being the same length.)
+        while i < len(left_half):
+            items[k] = left_half[i]
+            i += 1
+            k += 1
+        
+        while j < len(right_half):
+            items[k] = right_half[j]
+            j += 1
+            k += 1
+    
+    for z in range(0, len(items)):  # Changes the position attribute of the columns to match their
+        items[z // (SCREEN_WIDTH // NUMBER_OF_COLUMNS)].position = z # new pos.
+
+    refresh_items(items)
+
+
 def main():
     run = True
-    # columns = random_columns()
+    columns = random_columns()
     buttons = []
+    launched = False
 
     # Create buttons
-    mergeButton = Button(RED, 400, 200, 300, 100, 'Merge Sort', textcolour=WHITE, border=True, border_colour=WHITE)
-    bubbleButton = Button(RED, 800, 200, 300, 100, 'Bubble Sort', textcolour=WHITE, border=True, border_colour=WHITE)
+    mergeButton = Button(RED, 400, 200, 300, 100, text='Merge Sort', textcolour=WHITE, border=True, border_colour=WHITE)
+    bubbleButton = Button(RED, 800, 200, 300, 100, text='Bubble Sort', textcolour=WHITE, border=True, border_colour=WHITE)
 
     pygame.display.update()
 
@@ -142,24 +211,58 @@ def main():
             pos = pygame.mouse.get_pos()
 
             if event.type == pygame.QUIT:
+                try:
+                    print(f"{count} passes were made.")
+                except UnboundLocalError:
+                    print("Program was closed before sort was complete.")
+                    
                 print("Program has finished running.")
                 run = False
-            
+            if not launched:
+                if event.type == pygame.MOUSEMOTION:
+                
+                    for button in buttons:  # Checks if the mouse is over any of the buttons, causes it to change to green.
+                        if button.isOver(pos):
+                            button.colour = GREEN
+                        else:
+                            button.colour = RED
 
-            if event.type == pygame.MOUSEMOTION:
-            
-                for button in buttons:  # Checks if the mouse is over any of the buttons, causes it to change to green.
-                    if button.isOver(pos):
-                        button.colour = GREEN
-                    else:
-                        button.colour = RED
+                    refresh_items(buttons)
 
-                refresh_items(buttons)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    for button in buttons:
+                        if button.isOver(pos):
+                            launched = True
+                            SCREEN.fill(BLACK)
+                            refresh_items(columns)
+                            columns_sorted = False
+                            count = 0
+                            sort_method = button.text
+                            print(button.text)
+                
+            else:  # If the game HAS been launched..
+                
+                if sort_method == 'Bubble Sort':
+                    while not columns_sorted:
+                        print(sort_method)
+                        columns, columns_sorted = bubble_sort(columns)
+                        count += 1
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                # Insert clicking to sort options.
-                pass
-        
+                    # Columns should be sorted now, so change all to green.
+
+                    for column in columns:
+                        column.colour = GREEN                    
+                    refresh_items(columns)
+
+
+                elif sort_method == 'Merge Sort':
+                    merge_sort(columns)
+
+                        
+                refresh_items(columns)
+                pygame.display.update()
+                clock.tick(FPS)
+
         pygame.display.update()
 
 main()
