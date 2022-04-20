@@ -42,11 +42,20 @@ namespace Aerodynamics
         DispatcherTimer dt;
 
         bool playing = false;
+        List<Point3D> simDensitySources;
+        List<double> sourceDensityStrengths;
+        List<Point3D> simVelocitySources;
+        List<Vector3D> sourceVelocityStrengths;
         List<double> currentDensity;
         List<double> previousDensity;
-        List<Vector3D> currentVelocity;
-        List<Vector3D> previousVelocity;
+        List<double> currentVelocityX;
+        List<double> currentVelocityY;
+        List<double> currentVelocityZ;
+        List<double> previousVelocityX;
+        List<double> previousVelocityY;
+        List<double> previousVelocityZ;
         List<bool> occupiedCells;
+        double viscosity = 1;
         
         Vector3D simDimensions = new Vector3D(0, 0, 0);
         int simResolution = 10;
@@ -449,7 +458,19 @@ namespace Aerodynamics
             }
         }
 
-        int IndexReturn(int x, int y, int z, Vector3D dimensions)
+        void SetSimDensitySources(object sender, TextChangedEventArgs e)
+        {
+            //create density sources
+            
+        }
+        
+        void SetSimVelocitySources(object sender, TextChangedEventArgs e)
+        {
+            //create density sources
+            
+        }
+
+        int IndexReturn(double x, double y, double z, Vector3D dimensions)
         {
             return (int)(x + (dimensions.Y + 2) * simResolution * y + (dimensions.Z + 2) * simResolution * z );
         }
@@ -571,26 +592,260 @@ namespace Aerodynamics
             return returnList;
         }
 
+        List<double> SetSources(double deltaTime, List<Point3D> sources, List<double> strengths, List<double> l)
+        {
+            if(simDensitySources is null)
+            {
+
+            }
+            else
+            {
+                foreach (Point3D point in simDensitySources)
+                {
+                    int index = IndexReturn(point.X, point.Y, point.Z, simDimensions);
+                    l[index] += sourceDensityStrengths[index] * deltaTime ;
+                }
+            }
+            
+            return l;
+        }
+
+        List<double> Diffuse(double deltaTime, double diffusionRate, List<double> l, List<double> pl, int b)
+        {
+            pl = l;
+
+            double rate = deltaTime * diffusionRate * simDimensions.X * simDimensions.Y * simDimensions.Z * Math.Pow(simResolution, 3);
+
+            for(int m = 0; m < 20; m++)
+            {
+                for(int i = 1; i <= simDimensions.X*simResolution; i++)
+                {
+                    for(int j = 1; j <= simDimensions.Y*simResolution; j++)
+                    {
+                        for(int k = 1; k <= simDimensions.Z*simResolution; k++)
+                        {
+                            l[IndexReturn(i, j, k, simDimensions)] = (pl[IndexReturn(i, j, k, simDimensions)] + rate * (l[IndexReturn(i - 1, j, k, simDimensions)] + l[IndexReturn(i + 1, j, k, simDimensions)] + l[IndexReturn(i, j - 1, k, simDimensions)] + l[IndexReturn(i, j + 1, k, simDimensions)] + l[IndexReturn(i, j, k - 1, simDimensions)] + l[IndexReturn(i, j, k + 1, simDimensions)]))/ (1 + 6 * rate);
+                        }
+                    }
+                }
+                l = SetBoundary(b, l);
+            }
+
+            
+            return l;
+        }
+
+        List<double> Backtrace(double deltaTime, List<double>l, List<double>pl, int b)
+        {
+            previousVelocityX = currentVelocityX;
+            previousVelocityY = currentVelocityY;
+            previousVelocityZ = currentVelocityZ;
+            for(int i = 1; i <= simDimensions.X * simResolution; i++)
+            {
+                for(int j = 1; j <=  simDimensions.Y * simResolution; j++)
+                {
+                    for(int k = 1; k <= simDimensions.Z * simResolution; k++)
+                    {
+                        double x = i - simDimensions.X * simResolution * deltaTime * previousVelocityX[IndexReturn(i, j, k, simDimensions)];
+                        double y = j - simDimensions.Y * simResolution * deltaTime * previousVelocityY[IndexReturn(i, j, k, simDimensions)];
+                        double z = j - simDimensions.Z * simResolution * deltaTime * previousVelocityZ[IndexReturn(i, j, k, simDimensions)];
+
+                        x = (x < 0.5) ? 0.5 : x;
+                        x = (x > simDimensions.X * simResolution + 0.5) ? simDimensions.X * simResolution + 0.5 : x;
+                        int i0 = (int)x;
+                        int i1 = i0 + 1;
+                        y = (y < 0.5) ? 0.5 : y;
+                        y = (y > simDimensions.Y * simResolution + 0.5) ? simDimensions.Y * simResolution + 0.5 : y;
+                        int j0 = (int)y;
+                        int j1 = j0 + 1;
+                        z = (z < 0.5) ? 0.5 : z;
+                        z = (z > simDimensions.Z * simResolution + 0.5) ? simDimensions.Z * simResolution + 0.5 : z;
+                        int k0 = (int)z;
+                        int k1 = k0 + 1;
+                        double s1 = x - i0;
+                        double s0 = 1 - s1;
+                        double t1 = y - j0;
+                        double t0 = 1 - t1;
+                        double u1 = z - k0;
+                        double u0 = 1 - u1;
+                        pl = l;
+                        l[IndexReturn(i, j, k, simDimensions)] = u0 * (s0 * (t0 * pl[IndexReturn(i0, j0, k0, simDimensions)] + t1 * pl[IndexReturn(i0, j1, k0, simDimensions)]) + s1 * (t0 * pl[IndexReturn(i1, j0, k0, simDimensions)] + t1 * pl[IndexReturn(i1, j1, k0, simDimensions)])) +
+                            u1 * (s0 * (t0 * pl[IndexReturn(i0, j0, k1, simDimensions)] + t1 * pl[IndexReturn(i0, j1, k1, simDimensions)]) + s1 * (t0 * pl[IndexReturn(i1, j0, k1, simDimensions)] + t1 * pl[IndexReturn(i1, j1, k1, simDimensions)]));
+                        
+                    }
+                }
+            }
+            l = SetBoundary(b, l);
+            return l;
+        }
+
+        void Project(List<double> divergent, List<double> l)
+        {
+            for(int i = 1; i <= simDimensions.X * simResolution; i++)
+            {
+                for(int j = 1; j <= simDimensions.Y * simResolution; j++)
+                {
+                    for(int k = 1; k <= simDimensions.Z * simResolution; k++)
+                    {
+                        divergent[IndexReturn(i, j, k, simDimensions)] = -0.5 / (simDimensions.X * simResolution) * (currentVelocityX[IndexReturn(i + 1, j, k, simDimensions)] - currentVelocityX[IndexReturn(i - 1, j, k, simDimensions)]) +
+                            -0.5 / (simDimensions.Y * simResolution) * (currentVelocityY[IndexReturn(i, j + 1, k, simDimensions)] - currentVelocityY[IndexReturn(i, j - 1, k, simDimensions)]) +
+                            -0.5 / (simDimensions.Z * simResolution) * (currentVelocityZ[IndexReturn(i, j, k + 1, simDimensions)] - currentVelocityZ[IndexReturn(i, j, k - 1, simDimensions)]);
+                        l[IndexReturn(i, j, k, simDimensions)] = 0;
+                    }
+                }
+            }
+            divergent = SetBoundary(0, divergent);
+            l = SetBoundary(0, l);
+
+            for (int m = 0; m < 20; m++)
+            {
+                for (int i = 1; i <= simDimensions.X * simResolution; i++)
+                {
+                    for (int j = 1; j <= simDimensions.Y * simResolution; j++)
+                    {
+                        for (int k = 1; k <= simDimensions.Z * simResolution; k++)
+                        {
+                            l[IndexReturn(i, j, k, simDimensions)] = (divergent[IndexReturn(i, j, k, simDimensions)] + (l[IndexReturn(i - 1, j, k, simDimensions)] + l[IndexReturn(i + 1, j, k, simDimensions)] + l[IndexReturn(i, j - 1, k, simDimensions)] + l[IndexReturn(i, j + 1, k, simDimensions)] + l[IndexReturn(i, j, k - 1, simDimensions)] + l[IndexReturn(i, j, k + 1, simDimensions)])) / 6;
+                        }
+                    }
+                }
+                l = SetBoundary(0, l);
+            }
+
+            for(int i = 1; i <= simDimensions.X * simResolution; i++)
+            {
+                for(int j = 1; j < simDimensions.Y * simResolution; j++)
+                {
+                    for(int k = 1; k < simDimensions.Z * simResolution; k++)
+                    {
+                        currentVelocityX[IndexReturn(i, j, k, simDimensions)] -= 0.5 * (l[IndexReturn(i + 1, j, k, simDimensions)] - l[IndexReturn(i - 1, j, k, simDimensions)]) * simDimensions.X;
+                        currentVelocityY[IndexReturn(i, j, k, simDimensions)] -= 0.5 * (l[IndexReturn(i, j + 1, k, simDimensions)] - l[IndexReturn(i, j - 1, k, simDimensions)]) * simDimensions.Y;
+                        currentVelocityZ[IndexReturn(i, j, k, simDimensions)] -= 0.5 * (l[IndexReturn(i, j, k + 1, simDimensions)] - l[IndexReturn(i, j, k - 1, simDimensions)]) * simDimensions.Z;
+                    }
+                }
+            }
+            currentVelocityX = SetBoundary(1, currentVelocityX);
+            currentVelocityY = SetBoundary(2, currentVelocityY);
+            currentVelocityZ = SetBoundary(3, currentVelocityZ);
+        }
+
+        List<double> SetBoundary(int b, List<double> list)
+        {
+            for(int i = 1; i <= simDimensions.X * simResolution; i++)
+            {
+                for(int j = 1; j <= simDimensions.Y * simResolution; j++)
+                {
+                    list[IndexReturn(i, j, 0, simDimensions)] = b==3? -list[IndexReturn(i, j, 1, simDimensions)] : list[IndexReturn(i, j, 1, simDimensions)];
+                    list[IndexReturn(i, j, simDimensions.Z + 1, simDimensions)] = b==3? -list[IndexReturn(i, j, simDimensions.Z, simDimensions)] : list[IndexReturn(i, j, simDimensions.Z, simDimensions)];
+                }
+                for(int j = 1; j <= simDimensions.Y * simResolution; j++)
+                {
+                    list[IndexReturn(i, 0, j, simDimensions)] = b==2? -list[IndexReturn(i, 1, j, simDimensions)] : list[IndexReturn(i, 1, j, simDimensions)];
+                    list[IndexReturn(i, simDimensions.Y + 1, j, simDimensions)] = b==2? -list[IndexReturn(i, simDimensions.Y, j, simDimensions)] : list[IndexReturn(i, simDimensions.Y, j, simDimensions)];
+                }
+            }
+            for(int i = 1; i <= simDimensions.X * simResolution; i++)
+            {
+                for(int j = 1; j <= simDimensions.Y * simResolution; j++)
+                {
+                    list[IndexReturn(0, i, j, simDimensions)] = b==1? -list[IndexReturn(1, i, j, simDimensions)] : list[IndexReturn(1, i, j, simDimensions)];
+                    list[IndexReturn(simDimensions.X + 1, i, j, simDimensions)] = b==1? -list[IndexReturn(simDimensions.X, i, j, simDimensions)] : list[IndexReturn(simDimensions.X, i, j, simDimensions)];
+                }
+            }
+
+            list[IndexReturn(0, 0, 0, simDimensions)] = 1 / 3 * (list[IndexReturn(1, 0, 0, simDimensions)] + list[IndexReturn(0, 1, 0, simDimensions)] + list[IndexReturn(0, 0, 1, simDimensions)]);
+            list[IndexReturn(0, 0, simDimensions.Z * simResolution + 1, simDimensions)] = 1 / 3 * (list[IndexReturn(1, 0, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(0, 1, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(0, 0, simDimensions.Z * simResolution, simDimensions)]);
+            list[IndexReturn(0, simDimensions.Y * simResolution + 1, 0, simDimensions)] = 1 / 3 * (list[IndexReturn(1, simDimensions.Y * simResolution + 1, 0, simDimensions)] + list[IndexReturn(0, simDimensions.Y * simResolution, 0, simDimensions)] + list[IndexReturn(0, simDimensions.Y * simResolution + 1, 1, simDimensions)]);
+            list[IndexReturn(simDimensions.X * simResolution + 1, 0, 0, simDimensions)] = 1 / 3 * (list[IndexReturn(simDimensions.X * simResolution, 0, 0, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, 1, 0, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, 0, 1, simDimensions)]);
+            list[IndexReturn(0, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution + 1, simDimensions)] = 1 / 3 * (list[IndexReturn(1, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(0, simDimensions.Y * simResolution, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(0, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution, simDimensions)]);
+            list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution + 1, 0, simDimensions)] = 1 / 3 * (list[IndexReturn(simDimensions.X * simResolution, simDimensions.Y * simResolution + 1, 0, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution, 0, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution + 1, 1, simDimensions)]);
+            list[IndexReturn(simDimensions.X * simResolution + 1, 0, simDimensions.Z * simResolution + 1, simDimensions)] = 1 / 3 * (list[IndexReturn(simDimensions.X * simResolution, 0, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, 1, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, 0, simDimensions.Z * simResolution, simDimensions)]);
+            list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution + 1, simDimensions)] = 1 / 3 * (list[IndexReturn(simDimensions.X * simResolution, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution, simDimensions.Z * simResolution + 1, simDimensions)] + list[IndexReturn(simDimensions.X * simResolution + 1, simDimensions.Y * simResolution + 1, simDimensions.Z * simResolution, simDimensions)]);
+            return list;
+        }
+
+        void VelocitiesStep(double visc, double deltaTime)
+        {
+            List<double> sourceVelocityStrengthsX = new List<double>();
+            List<double> sourceVelocityStrengthsY = new List<double>();
+            List<double> sourceVelocityStrengthsZ = new List<double>();
+            foreach(Vector3D vector in sourceVelocityStrengths)
+            {
+                sourceVelocityStrengthsX.Add(vector.X);
+                sourceVelocityStrengthsY.Add(vector.Y);
+                sourceVelocityStrengthsZ.Add(vector.Z);
+            }
+            currentVelocityX = SetSources(deltaTime, simVelocitySources, sourceVelocityStrengthsX, currentVelocityX);
+            currentVelocityY = SetSources(deltaTime, simVelocitySources, sourceVelocityStrengthsY, currentVelocityY);
+            currentVelocityZ = SetSources(deltaTime, simVelocitySources, sourceVelocityStrengthsZ, currentVelocityZ);
+            currentVelocityX = Diffuse(deltaTime, visc, currentVelocityX, previousVelocityX, 1);
+            currentVelocityY = Diffuse(deltaTime, visc, currentVelocityY, previousVelocityY, 2);
+            currentVelocityZ = Diffuse(deltaTime, visc, currentVelocityZ, previousVelocityZ, 3);
+            Project(previousVelocityY, previousVelocityX);
+            currentVelocityX = Backtrace(deltaTime, currentVelocityX, previousVelocityX, 1);
+            currentVelocityY = Backtrace(deltaTime, currentVelocityY, previousVelocityY, 2);
+            currentVelocityZ = Backtrace(deltaTime, currentVelocityZ, previousVelocityZ, 3);
+            Project(previousVelocityY, previousVelocityX);
+        }
+
+
         void SimBegin()
         {
-            currentDensity = new List<double>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
-            previousDensity = new List<double>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
-            currentVelocity = new List<Vector3D>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
-            previousVelocity = new List<Vector3D>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
-            occupiedCells = new List<bool>((int)((simDimensions.X + 2) * (simDimensions.Y + 2) * (simDimensions.Z + 2) * Math.Pow(simResolution, 3)));
-            MeshGeometry3D mg3d = (MeshGeometry3D)((GeometryModel3D)mv3d.Content).Geometry;
+            currentDensity = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            previousDensity = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            currentVelocityX = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            currentVelocityY = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            currentVelocityZ = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            previousVelocityX = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            previousVelocityY = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            previousVelocityZ = new List<double>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            occupiedCells = new List<bool>((int)((simDimensions.X * simResolution + 2) * (simDimensions.Y * simResolution + 2) * (simDimensions.Z * simResolution + 2)));
+            if (mv3d.Content is null)
+            {
+
+            }
+            else
+            {
+                MeshGeometry3D mg3d = (MeshGeometry3D)((GeometryModel3D)mv3d.Content).Geometry;
+                Point3DCollection p3dc = mg3d.Positions;
+                List<Vector3D> occupiedTemp = new List<Vector3D>();
+                for(int i = 0; i < p3dc.Count/3; i++)
+                {
+                    Point3D p1 = p3dc[i];
+                    Point3D p2 = p3dc[i + 1];
+                    Point3D p3 = p3dc[i + 2];
+                    foreach(Vector3D v in TriangleIntercept(p1 - p2, p1 - p3, simResolution))
+                    {
+                        occupiedTemp.Add(v);
+                    }
+                }
+                foreach(Vector3D v in occupiedTemp)
+                {
+                    occupiedCells[IndexReturn(v.X, v.Y, v.Z, simDimensions)] = true;
+                }
+            }
+            
+            currentDensity = SetSources(1, simDensitySources, sourceDensityStrengths, currentDensity);
         }
+
         void SimTick(object sender, EventArgs e)
         {
-            
+            currentDensity = SetSources(dt.Interval.TotalSeconds, simDensitySources, sourceDensityStrengths, currentDensity);
+            currentDensity = Diffuse(dt.Interval.TotalSeconds, viscosity, currentDensity, previousDensity, 0);
+            currentDensity = Backtrace(dt.Interval.TotalSeconds, currentDensity, previousDensity, 0);
+            VelocitiesStep(viscosity, dt.Interval.TotalSeconds);
         }
 
         void SimEnd()
         {
             currentDensity = null;
             previousDensity = null;
-            currentVelocity = null;
-            previousVelocity = null;
+            currentVelocityX = null;
+            currentVelocityY = null;
+            currentVelocityZ = null;
+            previousVelocityX = null;
+            previousVelocityY = null;
+            previousVelocityZ = null;
             occupiedCells = null;
             GC.Collect();
         }
